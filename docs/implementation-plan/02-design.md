@@ -150,6 +150,8 @@ Gate modes must block only meaningful issues.
 
 The main Claude turn receives the user's original prompt. In non-blocking modes, the user-visible coaching message is returned as `systemMessage`; it is not an auto-corrected replacement prompt.
 
+Claude Code may include `systemMessage` hook output in the current turn's context. This is an explicit platform tradeoff: non-blocking modes can show feedback without rewriting the prompt, but they cannot guarantee the feedback is user-only. Gate modes keep feedback out of the main Claude turn because `decision: "block"` prevents the prompt from continuing.
+
 ## User Configuration
 
 The plugin manifest declares `userConfig.mode`:

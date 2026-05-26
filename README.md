@@ -57,6 +57,8 @@ sequenceDiagram
 
 No manual system prompt is required. The plugin is activated by installation and hook registration. The internal teacher instructions live inside the hook script and are sent only to the local Claude evaluator.
 
+Claude Code exposes non-blocking hook feedback through `systemMessage`. That message is shown to the user and may be included in the current turn's context by Claude Code. Prompt English Coach still never rewrites the submitted prompt or sends a corrected replacement as the user prompt.
+
 ## Plugin
 
 See [plugins/prompt-english-coach/README.md](plugins/prompt-english-coach/README.md).
@@ -73,6 +75,16 @@ To validate with Claude Code:
 claude plugin validate .
 claude plugin validate ./plugins/prompt-english-coach
 ```
+
+Before release, also run an interactive local install check:
+
+```text
+/plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+/hooks
+```
+
+Confirm that `/hooks` shows the `UserPromptSubmit` hook and that the selected `mode` appears in the plugin setup flow.
 
 ## License
 

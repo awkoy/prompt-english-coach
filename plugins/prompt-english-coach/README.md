@@ -53,6 +53,8 @@ Focus:
 5. In `gentle` and `coach`, Claude Code shows feedback as a `systemMessage` and sends your original prompt onward.
 6. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt and ask you to rewrite it yourself.
 
+Claude Code may include non-blocking `systemMessage` hook feedback in the current turn's context. The plugin does not auto-correct or replace your submitted prompt, but the visible coaching note may be available to Claude Code as hook context.
+
 ## Configuration
 
 The plugin prompts for one option when enabled:
@@ -72,3 +74,5 @@ Invalid or empty values fall back to `coach`.
 If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit` hook is registered from `prompt-english-coach`.
 
 If the internal Claude evaluator fails, the hook allows the prompt to continue. This prevents the coach from breaking the coding workflow.
+
+If prompts are very large, the plugin only sends the first 6,000 characters to the internal English evaluator. Your original prompt still continues unchanged in non-blocking modes.

@@ -111,6 +111,7 @@ test('hook returns systemMessage for coach mode and keeps prompt unblocked', asy
   assert.equal(result.code, 0);
   const output = JSON.parse(result.stdout);
   assert.equal(output.decision, undefined);
+  assert.equal(output.suppressOutput, true);
   assert.match(output.systemMessage, /English Coach:/);
   assert.match(output.systemMessage, /Suggested version/);
   assert.match(output.systemMessage, /Could you check whether this hook works correctly/);
@@ -151,6 +152,7 @@ test('hook blocks meaningful issues in gate mode', async () => {
   const output = JSON.parse(result.stdout);
   assert.equal(output.decision, 'block');
   assert.equal(output.suppressOriginalPrompt, true);
+  assert.equal(output.suppressOutput, true);
   assert.match(output.reason, /Please rewrite this before I continue/);
 });
 

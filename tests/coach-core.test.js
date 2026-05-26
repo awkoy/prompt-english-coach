@@ -77,6 +77,14 @@ test('buildEvaluatorPrompt JSON-encodes prompt boundaries', () => {
   assert.doesNotMatch(prompt, /<prompt>/);
 });
 
+test('buildEvaluatorPrompt caps very large prompts before CLI execution', () => {
+  const oversizedPrompt = `${'a'.repeat(9000)} is working good?`;
+  const prompt = buildEvaluatorPrompt(oversizedPrompt);
+
+  assert.ok(prompt.length < 7500);
+  assert.match(prompt, /\[Prompt truncated for English evaluation/);
+});
+
 test('buildFeedback creates gentle feedback', () => {
   const feedback = buildFeedback('gentle', {
     corrected: 'Could you help me fix this component?',
@@ -116,6 +124,7 @@ test('buildHookOutput adds visible systemMessage in gentle mode', () => {
 
   assert.match(output.systemMessage, /English Coach:/);
   assert.match(output.systemMessage, /Try:/);
+  assert.equal(output.suppressOutput, true);
   assert.doesNotMatch(JSON.stringify(output), /"decision":"block"/);
 });
 
@@ -139,6 +148,7 @@ test('buildHookOutput adds visible systemMessage in coach mode', () => {
 
   assert.match(output.systemMessage, /Suggested version/);
   assert.match(output.systemMessage, /Works correctly/);
+  assert.equal(output.suppressOutput, true);
   assert.equal(output.decision, undefined);
 });
 
@@ -162,8 +172,30 @@ test('buildHookOutput blocks meaningful issues in gate mode', () => {
 
   assert.equal(output.decision, 'block');
   assert.equal(output.suppressOriginalPrompt, true);
+  assert.equal(output.suppressOutput, true);
   assert.match(output.reason, /Please rewrite this before I continue/);
   assert.match(output.reason, /Suggested version/);
+});
+
+test('buildHookOutput blocks when evaluator flags a meaningful issue with malformed severity', () => {
+  const output = buildHookOutput('gate', {
+    isEnglish: true,
+    isMixed: false,
+    severity: 'none',
+    hasMeaningfulIssue: true,
+    corrected: 'Could you check whether this hook works correctly?',
+    issues: [
+      {
+        kind: 'grammar',
+        original: 'is working good',
+        suggestion: 'works correctly',
+        explanation: '"Works correctly" is the natural adverb form here.'
+      }
+    ],
+    hint: 'Use "works correctly", not "is working good".'
+  });
+
+  assert.equal(output.decision, 'block');
 });
 
 test('buildHookOutput does not block minor style issues in gate mode', () => {

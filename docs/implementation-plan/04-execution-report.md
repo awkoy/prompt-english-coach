@@ -12,6 +12,8 @@
 - Implemented user-visible `systemMessage` feedback for `gentle` and `coach`.
 - Implemented `decision: "block"` feedback for `gate` and `strict`.
 - Implemented fail-open behavior when the evaluator cannot run.
+- Added privacy hardening with `suppressOutput: true` for structured hook feedback.
+- Added evaluator prompt truncation to keep large user prompts from becoming huge CLI arguments.
 - Added unit tests and hook-flow tests using a fake `claude` executable.
 - Added plugin examples, validation scripts, README files, and license.
 
@@ -23,6 +25,8 @@ The test suite covers these flows:
 - English prompt in `coach`: hook returns a visible `systemMessage` and does not block.
 - English prompt in `gate`: hook returns `decision: "block"` for meaningful issues.
 - Evaluator unavailable: hook exits successfully with no output so the coding workflow continues.
+- Malformed evaluator severity with `hasMeaningfulIssue: true`: gate mode still blocks.
+- Oversized prompts: evaluator input is capped while the original submitted prompt remains unchanged.
 
 ## Validation Commands
 
@@ -42,3 +46,5 @@ The plugin was not installed into the user's Claude Code configuration during im
 /plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
+
+After install, run `/hooks` and confirm that the `UserPromptSubmit` hook is registered. The mode is configured through Claude Code's standard plugin `userConfig` setup flow.

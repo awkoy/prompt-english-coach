@@ -2,6 +2,7 @@
 
 const VALID_MODES = new Set(['gentle', 'coach', 'gate', 'strict']);
 const VALID_SEVERITIES = new Set(['none', 'minor', 'meaningful']);
+const MAX_EVALUATED_PROMPT_CHARS = 6000;
 
 function normalizeMode(value) {
   return VALID_MODES.has(value) ? value : 'coach';
@@ -147,7 +148,7 @@ function buildHookOutput(modeValue, evaluation) {
     return null;
   }
 
-  if (!evaluation.severity || evaluation.severity === 'none') {
+  if ((!evaluation.severity || evaluation.severity === 'none') && !hasMeaningfulIssue(evaluation)) {
     return null;
   }
 
@@ -162,7 +163,8 @@ function buildHookOutput(modeValue, evaluation) {
     return {
       decision: 'block',
       reason: feedback,
-      suppressOriginalPrompt: true
+      suppressOriginalPrompt: true,
+      suppressOutput: true
     };
   }
 
@@ -171,12 +173,24 @@ function buildHookOutput(modeValue, evaluation) {
   }
 
   return {
-    systemMessage: buildFeedback(mode, evaluation)
+    systemMessage: buildFeedback(mode, evaluation),
+    suppressOutput: true
   };
 }
 
+function preparePromptForEvaluation(userPrompt) {
+  const text = String(userPrompt || '');
+  if (text.length <= MAX_EVALUATED_PROMPT_CHARS) return text;
+
+  return [
+    text.slice(0, MAX_EVALUATED_PROMPT_CHARS),
+    '',
+    `[Prompt truncated for English evaluation at ${MAX_EVALUATED_PROMPT_CHARS} characters.]`
+  ].join('\n');
+}
+
 function buildEvaluatorPrompt(userPrompt) {
-  const promptJson = JSON.stringify(String(userPrompt || ''));
+  const promptJson = JSON.stringify(preparePromptForEvaluation(userPrompt));
 
   return [
     'You are Prompt English Coach, a concise supportive English teacher for developer prompts.',
@@ -202,5 +216,6 @@ module.exports = {
   parseEvaluatorJson,
   buildEvaluatorPrompt,
   buildFeedback,
-  buildHookOutput
+  buildHookOutput,
+  preparePromptForEvaluation
 };
