@@ -1,0 +1,7 @@
+{
+  "session_id": "example",
+  "transcript_path": "/tmp/transcript.jsonl",
+  "cwd": "/tmp/project",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "Can you check if this hook is working good?"
+}

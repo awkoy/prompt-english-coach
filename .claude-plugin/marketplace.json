@@ -1,0 +1,17 @@
+{
+  "name": "prompt-english-coach",
+  "owner": {
+    "name": "Prompt English Coach contributors"
+  },
+  "description": "Claude Code plugins for deliberate English practice in prompts.",
+  "plugins": [
+    {
+      "name": "prompt-english-coach",
+      "source": "./plugins/prompt-english-coach",
+      "description": "A supportive English teacher for Claude Code prompts.",
+      "license": "MIT",
+      "keywords": ["english", "writing", "prompts", "learning", "hooks"],
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "prompt-english-coach",
+  "displayName": "Prompt English Coach",
+  "description": "A supportive English teacher for Claude Code prompts.",
+  "author": {
+    "name": "Prompt English Coach contributors"
+  },
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": ["english", "coach", "writing", "prompt", "hook"],
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Coaching mode",
+      "description": "How strongly Prompt English Coach should intervene: gentle, coach, gate, or strict.",
+      "default": "coach",
+      "required": false
+    }
+  }
+}

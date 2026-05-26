@@ -1,0 +1,15 @@
+{
+  "name": "prompt-english-coach-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin marketplace for Prompt English Coach.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "validate:json": "node scripts/validate-json.js",
+    "validate": "npm run validate:json && npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
