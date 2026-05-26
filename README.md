@@ -42,7 +42,14 @@ For local development:
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
-Claude Code will prompt for `mode` when the plugin is enabled. If the mode is empty or invalid, the hook falls back to `coach`.
+Claude Code will prompt for `mode` when the plugin is enabled. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so type one of:
+
+- `coach` - corrected version and one to three explanations
+- `gentle` - one short hint
+- `gate` - block meaningful grammar or clarity issues
+- `strict` - gate behavior with fuller feedback
+
+If the mode is empty or invalid, the hook falls back to `coach`.
 
 ## Examples
 

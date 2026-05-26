@@ -58,9 +58,12 @@ Claude Code may include non-blocking `systemMessage` hook feedback in the curren
 
 ## Configuration
 
-The plugin prompts for one option when enabled:
+The plugin prompts for one text option when enabled. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
 
-- `mode`: `gentle`, `coach`, `gate`, or `strict`
+- `coach`: corrected version and one to three explanations
+- `gentle`: one short hint
+- `gate`: block meaningful grammar or clarity issues
+- `strict`: gate behavior with fuller feedback
 
 Invalid or empty values fall back to `coach`.
 

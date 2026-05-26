@@ -159,10 +159,10 @@ The plugin manifest declares `userConfig.mode`:
 ```json
 {
   "type": "string",
-  "title": "Coaching mode",
-  "description": "How strongly Prompt English Coach should intervene: gentle, coach, gate, or strict.",
+  "title": "Coaching mode: coach, gentle, gate, or strict",
+  "description": "Type one value. coach = corrected version + explanations, gentle = one short hint, gate = block meaningful issues, strict = gate with fuller feedback.",
   "default": "coach",
-  "required": false
+  "required": true
 }
 ```
 
