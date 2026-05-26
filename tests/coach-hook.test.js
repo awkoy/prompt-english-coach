@@ -156,6 +156,43 @@ test('hook blocks meaningful issues in gate mode', async () => {
   assert.match(output.reason, /Please rewrite this before I continue/);
 });
 
+test('hook blocks meaningful issues in strict mode from uppercase plugin env', async () => {
+  const fakeBin = makeFakeClaude({
+    'Hello, you is bad woman': {
+      language: 'english',
+      isEnglish: true,
+      isMixed: false,
+      hasMeaningfulIssue: true,
+      severity: 'meaningful',
+      corrected: 'Hello, you are a bad woman.',
+      issues: [
+        {
+          kind: 'grammar',
+          original: 'you is',
+          suggestion: 'you are',
+          explanation: 'Use "are" with "you".'
+        }
+      ],
+      hint: 'Use "you are", not "you is".'
+    }
+  });
+
+  const result = await runHook({
+    hook_event_name: 'UserPromptSubmit',
+    prompt: 'Hello, you is bad woman'
+  }, {
+    env: {
+      CLAUDE_PLUGIN_OPTION_MODE: 'strict',
+      PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`
+    }
+  });
+
+  assert.equal(result.code, 0);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.decision, 'block');
+  assert.match(output.reason, /Please rewrite this before I continue/);
+});
+
 test('hook fails open when evaluator is unavailable', async () => {
   const result = await runHook({
     hook_event_name: 'UserPromptSubmit',

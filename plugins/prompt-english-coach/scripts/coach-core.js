@@ -5,7 +5,19 @@ const VALID_SEVERITIES = new Set(['none', 'minor', 'meaningful']);
 const MAX_EVALUATED_PROMPT_CHARS = 6000;
 
 function normalizeMode(value) {
-  return VALID_MODES.has(value) ? value : 'coach';
+  const normalized = String(value || '').trim().toLowerCase();
+  return VALID_MODES.has(normalized) ? normalized : 'coach';
+}
+
+function resolveMode(argv = process.argv, env = process.env) {
+  const argvMode = argv[2];
+  if (argvMode && !String(argvMode).includes('${')) return normalizeMode(argvMode);
+
+  return normalizeMode(
+    env.CLAUDE_PLUGIN_OPTION_MODE ||
+    env.CLAUDE_PLUGIN_OPTION_mode ||
+    env.PROMPT_ENGLISH_COACH_MODE
+  );
 }
 
 function classifyPromptLanguage(prompt) {
@@ -212,6 +224,7 @@ function buildEvaluatorPrompt(userPrompt) {
 
 module.exports = {
   normalizeMode,
+  resolveMode,
   classifyPromptLanguage,
   parseEvaluatorJson,
   buildEvaluatorPrompt,

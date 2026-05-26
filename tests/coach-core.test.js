@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 
 const {
   normalizeMode,
+  resolveMode,
   classifyPromptLanguage,
   parseEvaluatorJson,
   buildEvaluatorPrompt,
@@ -17,8 +18,17 @@ test('normalizeMode defaults unknown values to coach', () => {
   assert.equal(normalizeMode('coach'), 'coach');
   assert.equal(normalizeMode('gate'), 'gate');
   assert.equal(normalizeMode('strict'), 'strict');
+  assert.equal(normalizeMode(' Strict '), 'strict');
+  assert.equal(normalizeMode('GATE'), 'gate');
   assert.equal(normalizeMode('aggressive'), 'coach');
   assert.equal(normalizeMode(undefined), 'coach');
+});
+
+test('resolveMode accepts argv and uppercase Claude plugin env', () => {
+  assert.equal(resolveMode(['node', 'hook', 'strict'], {}), 'strict');
+  assert.equal(resolveMode(['node', 'hook'], { CLAUDE_PLUGIN_OPTION_MODE: 'gate' }), 'gate');
+  assert.equal(resolveMode(['node', 'hook'], { CLAUDE_PLUGIN_OPTION_mode: 'gentle' }), 'gentle');
+  assert.equal(resolveMode(['node', 'hook', '${user_config.mode}'], { CLAUDE_PLUGIN_OPTION_MODE: 'strict' }), 'strict');
 });
 
 test('classifyPromptLanguage recognizes primarily English prompts', () => {

@@ -4,7 +4,7 @@
 const { spawn } = require('node:child_process');
 
 const {
-  normalizeMode,
+  resolveMode,
   classifyPromptLanguage,
   parseEvaluatorJson,
   buildEvaluatorPrompt,
@@ -88,7 +88,7 @@ async function main() {
   const language = classifyPromptLanguage(prompt);
   if (!language.shouldCheck) return;
 
-  const mode = normalizeMode(process.env.CLAUDE_PLUGIN_OPTION_mode);
+  const mode = resolveMode(process.argv, process.env);
 
   try {
     const raw = await runClaudeEvaluator(buildEvaluatorPrompt(prompt));
