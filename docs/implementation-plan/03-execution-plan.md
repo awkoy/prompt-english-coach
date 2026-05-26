@@ -303,7 +303,7 @@ test('buildHookOutput adds concise context in gentle mode', () => {
     issues: [],
     hint: 'Use \"help me fix\", not \"help me to fixing\".'
   });
-  assert.match(output.systemMessage, /English Coach:/);
+  assert.match(output.systemMessage, /^English Coach\n/);
   assert.match(output.systemMessage, /Try:/);
   assert.doesNotMatch(JSON.stringify(output), /"decision":"block"/);
 });
@@ -437,13 +437,13 @@ function buildFeedback(mode, evaluation) {
   const issues = Array.isArray(evaluation.issues) ? evaluation.issues.slice(0, mode === 'strict' ? 4 : 3) : [];
 
   if (mode === 'gentle') {
-    const lines = ['English Coach:'];
+    const lines = ['English Coach'];
     if (corrected) lines.push(`Try: \"${corrected}\"`);
-    if (hint) lines.push(`Note: ${hint}`);
+    if (hint) lines.push(`Why: ${hint}`);
     return lines.join('\\n');
   }
 
-  const lines = ['English Coach:'];
+  const lines = ['English Coach'];
   if (corrected) {
     lines.push('', 'Suggested version:', `\"${corrected}\"`);
   }
@@ -480,7 +480,7 @@ function buildHookOutput(modeValue, evaluation) {
     const feedback = buildFeedback(mode, evaluation);
     return {
       decision: 'block',
-      reason: feedback.replace('English Coach:', 'English Coach: Please rewrite this before I continue.')
+      reason: feedback.replace('English Coach', 'English Coach\\nPlease rewrite this before I continue.')
     };
   }
 
@@ -882,15 +882,16 @@ Gate modes do not block minor style preferences.
 Gentle:
 
 ```text
-English Coach:
+English Coach
 Try: "Could you help me fix this component?"
-Note: use "help me fix", not "help me to fixing".
+Why: use "help me fix", not "help me to fixing".
 ```
 
 Gate:
 
 ```text
-English Coach: Please rewrite this before I continue.
+English Coach
+Please rewrite this before I continue.
 
 Suggested version:
 "Could you check whether this hook works correctly?"

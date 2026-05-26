@@ -26,15 +26,16 @@ Gate modes do not block minor style preferences.
 Gentle:
 
 ```text
-English Coach:
+English Coach
 Try: "Could you help me fix this component?"
-Note: use "help me fix", not "help me to fixing".
+Why: use "help me fix", not "help me to fixing".
 ```
 
 Gate:
 
 ```text
-English Coach: Please rewrite this before I continue.
+English Coach
+Please rewrite this before I continue.
 
 Suggested version:
 "Could you check whether this hook works correctly?"

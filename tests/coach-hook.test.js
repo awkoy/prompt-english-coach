@@ -112,7 +112,7 @@ test('hook returns systemMessage for coach mode and keeps prompt unblocked', asy
   const output = JSON.parse(result.stdout);
   assert.equal(output.decision, undefined);
   assert.equal(output.suppressOutput, true);
-  assert.match(output.systemMessage, /English Coach:/);
+  assert.match(output.systemMessage, /^English Coach\n/);
   assert.match(output.systemMessage, /Suggested version/);
   assert.match(output.systemMessage, /Could you check whether this hook works correctly/);
 });

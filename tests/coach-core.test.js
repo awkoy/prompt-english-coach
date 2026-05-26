@@ -92,9 +92,9 @@ test('buildFeedback creates gentle feedback', () => {
     issues: []
   });
 
-  assert.match(feedback, /English Coach:/);
+  assert.match(feedback, /^English Coach\n/);
   assert.match(feedback, /Try: "Could you help me fix this component\?"/);
-  assert.match(feedback, /Note: use "help me fix"/i);
+  assert.match(feedback, /Why: use "help me fix"/i);
 });
 
 test('buildHookOutput allows clean English silently', () => {
@@ -122,7 +122,7 @@ test('buildHookOutput adds visible systemMessage in gentle mode', () => {
     hint: 'Use "help me fix", not "help me to fixing".'
   });
 
-  assert.match(output.systemMessage, /English Coach:/);
+  assert.match(output.systemMessage, /^English Coach\n/);
   assert.match(output.systemMessage, /Try:/);
   assert.equal(output.suppressOutput, true);
   assert.doesNotMatch(JSON.stringify(output), /"decision":"block"/);
@@ -173,7 +173,7 @@ test('buildHookOutput blocks meaningful issues in gate mode', () => {
   assert.equal(output.decision, 'block');
   assert.equal(output.suppressOriginalPrompt, true);
   assert.equal(output.suppressOutput, true);
-  assert.match(output.reason, /Please rewrite this before I continue/);
+  assert.match(output.reason, /^English Coach\nPlease rewrite this before I continue/);
   assert.match(output.reason, /Suggested version/);
 });
 

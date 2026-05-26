@@ -111,13 +111,13 @@ function buildFeedback(modeValue, evaluation) {
   const issues = Array.isArray(evaluation.issues) ? evaluation.issues.slice(0, maxIssues) : [];
 
   if (mode === 'gentle') {
-    const lines = ['English Coach:'];
+    const lines = ['English Coach'];
     if (corrected) lines.push(`Try: ${quoteIfNeeded(corrected)}`);
-    if (hint) lines.push(`Note: ${hint}`);
+    if (hint) lines.push(`Why: ${hint}`);
     return lines.join('\n');
   }
 
-  const lines = ['English Coach:'];
+  const lines = ['English Coach'];
   if (corrected) {
     lines.push('', 'Suggested version:', quoteIfNeeded(corrected));
   }
@@ -156,8 +156,8 @@ function buildHookOutput(modeValue, evaluation) {
 
   if (shouldBlock) {
     const feedback = buildFeedback(mode, evaluation).replace(
-      'English Coach:',
-      'English Coach: Please rewrite this before I continue.'
+      'English Coach',
+      'English Coach\nPlease rewrite this before I continue.'
     );
 
     return {
