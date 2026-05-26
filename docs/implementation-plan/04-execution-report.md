@@ -4,7 +4,7 @@
 
 - Created the Claude Code marketplace layout.
 - Added the `prompt-english-coach` plugin manifest with `mode` user configuration.
-- Registered `UserPromptSubmit` and `Stop` command hooks.
+- Registered `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` command hooks.
 - Implemented a Node.js hook runner that reads hook JSON from stdin.
 - Implemented language heuristics for English, Russian, mixed-language, and short prompts.
 - Implemented internal Claude evaluator prompt construction.
@@ -14,6 +14,7 @@
 - Implemented fail-open behavior when the evaluator cannot run.
 - Added privacy hardening with `suppressOutput: true` for structured hook feedback.
 - Added one-shot pending feedback storage so non-blocking feedback does not leave `UserPromptSubmit` stdout.
+- Hardened pending feedback cleanup with user-only file permissions, 24-hour expiry, and cleanup on failed responses or session end.
 - Added evaluator prompt truncation to keep large user prompts from becoming huge CLI arguments.
 - Added unit tests and hook-flow tests using a fake `claude` executable.
 - Added plugin examples, validation scripts, README files, and license.
@@ -24,6 +25,8 @@ The test suite covers these flows:
 
 - Russian prompt: hook exits silently and does not call Claude.
 - English prompt in `coach`: `UserPromptSubmit` returns no output, stores feedback, and `Stop` displays it once.
+- `StopFailure` and `SessionEnd`: pending feedback is cleared without being shown later.
+- Pending feedback files: directory mode is `0700`, file mode is `0600`, and stale files are discarded.
 - English prompt in `gate`: hook returns `decision: "block"` for meaningful issues.
 - Evaluator unavailable: hook exits successfully with no output so the coding workflow continues.
 - Malformed evaluator severity with `hasMeaningfulIssue: true`: gate mode still blocks.
@@ -44,8 +47,8 @@ claude plugin validate ./plugins/prompt-english-coach
 The plugin was not installed into the user's Claude Code configuration during implementation because that would modify global Claude settings outside the repository. The repository is ready for local install with:
 
 ```text
-/plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
+/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
-After install, run `/hooks` and confirm that the `UserPromptSubmit` and `Stop` hooks are registered. The mode is configured through Claude Code's standard plugin `userConfig` setup flow.
+After install, run `/hooks` and confirm that the `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks are registered. The mode is configured through Claude Code's standard plugin `userConfig` setup flow.

@@ -4,7 +4,7 @@
 
 The repository is a Claude Code plugin marketplace. The root `.claude-plugin/marketplace.json` exposes one plugin, `prompt-english-coach`, from `plugins/prompt-english-coach`.
 
-The plugin uses the standard auto-discovered `hooks/hooks.json` file for `UserPromptSubmit` and `Stop` hooks. Both hooks are implemented as command hooks that run a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
+The plugin uses the standard auto-discovered `hooks/hooks.json` file for `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks. The hooks are implemented as command hooks that run a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
 
 ## Why Command Hook Instead of Pure Prompt Hook
 
@@ -74,7 +74,8 @@ prompt-english-coach/
    - `gate`: block only meaningful grammar or clarity issues.
    - `strict`: same blocking threshold as gate, with more complete feedback when blocked.
 8. When Claude Code fires `Stop`, the script consumes the stored feedback once and returns it as `systemMessage`.
-9. If evaluator execution fails, times out, or returns malformed JSON, the hook fails open and allows the user's prompt.
+9. When Claude Code fires `StopFailure` or `SessionEnd`, the script deletes pending feedback without displaying it later.
+10. If evaluator execution fails, times out, or returns malformed JSON, the hook fails open and allows the user's prompt.
 
 ## User Experience Flow
 
@@ -104,8 +105,11 @@ sequenceDiagram
             CC->>Claude: Original prompt
             Claude-->>User: Normal Claude Code response
             CC->>Hook: Stop JSON
-            Hook-->>CC: systemMessage feedback
+            Hook-->>CC: systemMessage feedback and cleanup
             CC-->>User: Shows English Coach feedback after answer
+        else response fails or session ends
+            CC->>Hook: StopFailure or SessionEnd JSON
+            Hook->>Hook: Delete pending feedback
         else gate or strict with no meaningful issue
             Hook-->>CC: No output, allow
             CC->>Claude: Original prompt
@@ -126,9 +130,10 @@ In plain words:
 4. If not English, nothing happens.
 5. If English, the hook asks a small internal Claude evaluation prompt to inspect the English.
 6. In `gentle` or `coach`, the original prompt continues silently.
-7. After Claude finishes answering, the `Stop` hook shows the saved coaching feedback.
-8. In `gate` or `strict`, meaningful grammar or clarity issues block the prompt; minor style preferences do not.
-9. The user rewrites the prompt manually and submits again.
+7. After Claude finishes answering, the `Stop` hook shows and deletes the saved coaching feedback.
+8. If the response fails or the session ends before `Stop`, cleanup hooks delete the pending feedback.
+9. In `gate` or `strict`, meaningful grammar or clarity issues block the prompt; minor style preferences do not.
+10. The user rewrites the prompt manually and submits again.
 
 ## Prompting Layers
 
@@ -154,6 +159,8 @@ Gate modes must block only meaningful issues.
 ```
 
 The main Claude turn receives the user's original prompt. In non-blocking modes, `UserPromptSubmit` returns no stdout; the coaching note is stored temporarily and displayed from the later `Stop` hook. This prevents the coach note from influencing the prompt that triggered it. It is not an auto-corrected replacement prompt.
+
+Pending feedback files are stored with user-only permissions, expire after 24 hours, and are cleaned up by `Stop`, `StopFailure`, or `SessionEnd`.
 
 Gate modes keep feedback out of the main Claude turn because `decision: "block"` prevents the prompt from continuing.
 
@@ -248,7 +255,8 @@ This is necessary because a language coach should not break a coding session due
 - The hook reads prompt text and sends it to the local Claude CLI.
 - It must not write prompt text to logs by default.
 - It must set `PROMPT_ENGLISH_COACH_INTERNAL=1` when invoking Claude CLI to avoid recursive coaching.
-- It may write short pending feedback to the plugin data directory when available, otherwise to the OS temp directory, and must consume it once on `Stop`.
+- It may write short pending feedback to the plugin data directory when available, otherwise to the OS temp directory.
+- Pending feedback directories must be `0700`, files must be `0600`, files must expire after 24 hours, and cleanup must run on `Stop`, `StopFailure`, and `SessionEnd`.
 - It must not execute shell commands derived from the user prompt.
 - It must use `child_process.spawn` with argument arrays, not shell interpolation.
 

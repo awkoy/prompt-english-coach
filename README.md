@@ -38,9 +38,11 @@ After publishing this repository to GitHub:
 For local development:
 
 ```text
-/plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
+/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
+
+On macOS, Claude Code may not be allowed to read plugin marketplaces directly from `~/Documents` unless you grant broader privacy access. A path under `/Users/awkoy/WORK` avoids that local TCC issue.
 
 Claude Code will prompt for `mode` when the plugin is enabled. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so type one of:
 
@@ -102,8 +104,11 @@ sequenceDiagram
             CC->>Main: Original prompt
             Main-->>CC: Main answer
             CC->>Hook: Stop
-            Hook-->>CC: systemMessage feedback
+            Hook-->>CC: systemMessage feedback and cleanup
             CC-->>User: Shows English Coach feedback after the answer
+        else response fails or session ends
+            CC->>Hook: StopFailure or SessionEnd
+            Hook->>Hook: Cleanup pending feedback
         else gate or strict with meaningful issue
             Hook-->>CC: decision=block + reason
             CC-->>User: Asks user to rewrite
@@ -132,7 +137,7 @@ See [plugins/prompt-english-coach/README.md](plugins/prompt-english-coach/README
 
 - Claude Code controls the visual styling of hook messages. Plugins cannot set a custom color for one `systemMessage`.
 - Non-blocking feedback is displayed after the main answer, so it does not affect the prompt that triggered it.
-- The delayed feedback is stored briefly in the plugin data directory when available, otherwise in the OS temp directory, and consumed once by the `Stop` hook.
+- The delayed feedback is stored briefly in the plugin data directory when available, otherwise in the OS temp directory. Files are user-private, expire after 24 hours, and are cleaned up by `Stop`, `StopFailure`, or `SessionEnd`.
 - Very large prompts are truncated to the first 6,000 characters for English evaluation only. The original prompt continues unchanged in non-blocking modes.
 - The plugin currently targets Claude Code only.
 
@@ -152,12 +157,12 @@ claude plugin validate ./plugins/prompt-english-coach
 Before release, also run an interactive local install check:
 
 ```text
-/plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
+/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```
 
-Confirm that `/hooks` shows both `UserPromptSubmit` and `Stop` hooks and that the selected `mode` appears in the plugin setup flow.
+Confirm that `/hooks` shows `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks and that the selected `mode` appears in the plugin setup flow.
 
 ## License
 

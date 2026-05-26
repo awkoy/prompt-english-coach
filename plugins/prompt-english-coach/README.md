@@ -54,7 +54,8 @@ Focus:
 5. In `gentle` and `coach`, the hook stores feedback and allows your original prompt silently.
 6. Claude answers your original prompt.
 7. Claude Code fires the `Stop` hook, and the plugin shows the stored feedback as a `systemMessage`.
-8. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt immediately and ask you to rewrite it yourself.
+8. If the response fails or the session ends before `Stop`, `StopFailure` or `SessionEnd` cleans up pending feedback without showing it later.
+9. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt immediately and ask you to rewrite it yourself.
 
 This delayed path keeps non-blocking feedback out of the `UserPromptSubmit` stdout path, where hook output can affect the main Claude turn. The plugin does not auto-correct or replace your submitted prompt.
 
@@ -77,8 +78,10 @@ Invalid or empty values fall back to `coach`.
 
 ## Troubleshooting
 
-If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit` and `Stop` hooks are registered from `prompt-english-coach`.
+If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks are registered from `prompt-english-coach`.
 
 If the internal Claude evaluator fails, the hook allows the prompt to continue. This prevents the coach from breaking the coding workflow.
 
 If prompts are very large, the plugin only sends the first 6,000 characters to the internal English evaluator. Your original prompt still continues unchanged in non-blocking modes.
+
+Delayed feedback is stored briefly in a user-private pending file and expires after 24 hours.

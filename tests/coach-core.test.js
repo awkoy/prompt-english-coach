@@ -2,6 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   normalizeMode,
@@ -13,6 +15,8 @@ const {
   buildHookOutput,
   buildDelayedFeedback
 } = require('../plugins/prompt-english-coach/scripts/coach-core');
+
+const repoRoot = path.resolve(__dirname, '..');
 
 test('normalizeMode defaults unknown values to coach', () => {
   assert.equal(normalizeMode('gentle'), 'gentle');
@@ -273,4 +277,13 @@ test('buildHookOutput ignores evaluator output for mixed prompts', () => {
   });
 
   assert.equal(output, null);
+});
+
+test('stop hook configuration does not show status text on every response', () => {
+  const hooksConfig = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins/prompt-english-coach/hooks/hooks.json'), 'utf8')
+  );
+  const stopHook = hooksConfig.hooks.Stop[0].hooks[0];
+
+  assert.equal(stopHook.statusMessage, undefined);
 });

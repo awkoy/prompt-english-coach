@@ -16,6 +16,8 @@ const {
   buildDelayedFeedback
 } = require('./coach-core');
 
+const PENDING_FEEDBACK_TTL_MS = 24 * 60 * 60 * 1000;
+
 function readStdin() {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -94,23 +96,70 @@ function getPendingPath(input) {
   return path.join(getDataDir(), 'pending-feedback', `${getSessionKey(input)}.json`);
 }
 
+function ensurePrivateDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true, mode: 0o700 });
+  fs.chmodSync(dirPath, 0o700);
+}
+
+function removeFile(filePath) {
+  try {
+    fs.rmSync(filePath, { force: true });
+  } catch {
+    // Ignore cleanup failures so the coach never blocks normal prompting.
+  }
+}
+
+function isFreshPendingFile(filePath, now = Date.now()) {
+  try {
+    return now - fs.statSync(filePath).mtimeMs <= PENDING_FEEDBACK_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
+function sweepStalePendingFeedback() {
+  const pendingDir = path.join(getDataDir(), 'pending-feedback');
+  let entries;
+  try {
+    entries = fs.readdirSync(pendingDir);
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    const filePath = path.join(pendingDir, entry);
+    if (!isFreshPendingFile(filePath)) removeFile(filePath);
+  }
+}
+
 function savePendingFeedback(input, feedback) {
   if (!feedback) return;
 
+  sweepStalePendingFeedback();
+
   const pendingPath = getPendingPath(input);
-  fs.mkdirSync(path.dirname(pendingPath), { recursive: true });
-  fs.writeFileSync(pendingPath, JSON.stringify({
+  ensurePrivateDir(path.dirname(pendingPath));
+
+  const tempPath = `${pendingPath}.${process.pid}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify({
     feedback,
     createdAt: new Date().toISOString()
-  }));
+  }), { mode: 0o600 });
+  fs.renameSync(tempPath, pendingPath);
+  fs.chmodSync(pendingPath, 0o600);
 }
 
 function consumePendingFeedback(input) {
   const pendingPath = getPendingPath(input);
 
   try {
+    if (!isFreshPendingFile(pendingPath)) {
+      removeFile(pendingPath);
+      return '';
+    }
+
     const payload = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
-    fs.rmSync(pendingPath, { force: true });
+    removeFile(pendingPath);
     return typeof payload.feedback === 'string' ? payload.feedback : '';
   } catch {
     return '';
@@ -118,11 +167,7 @@ function consumePendingFeedback(input) {
 }
 
 function clearPendingFeedback(input) {
-  try {
-    fs.rmSync(getPendingPath(input), { force: true });
-  } catch {
-    // Ignore cleanup failures so the coach never blocks normal prompting.
-  }
+  removeFile(getPendingPath(input));
 }
 
 function handleStop(input) {
@@ -173,6 +218,12 @@ async function main() {
 
   if (input.hook_event_name === 'Stop') {
     handleStop(input);
+    return;
+  }
+
+  if (input.hook_event_name === 'StopFailure' || input.hook_event_name === 'SessionEnd') {
+    clearPendingFeedback(input);
+    sweepStalePendingFeedback();
     return;
   }
 

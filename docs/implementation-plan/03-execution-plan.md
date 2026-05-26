@@ -1,5 +1,7 @@
 # Prompt English Coach Implementation Plan
 
+> Historical note: this plan records the original implementation sequence. The current plugin uses delayed non-blocking feedback through `Stop`, plus cleanup through `StopFailure` and `SessionEnd`; use `02-design.md` and the current tests as the source of truth before re-executing any old snippets below.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build Prompt English Coach as a full working, distributable Claude Code plugin that gives English-learning feedback for English prompts and can gate meaningful grammar or clarity issues.
@@ -963,7 +965,7 @@ If the local Claude CLI prints a different success line, record the exact succes
 Inside Claude Code from a separate test session, run:
 
 ```text
-/plugin marketplace add /Users/awkoy/Documents/prompt-english-coach
+/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```
@@ -972,7 +974,7 @@ Expected:
 
 - The marketplace is added.
 - The plugin installs.
-- `/hooks` shows a `UserPromptSubmit` hook from `prompt-english-coach`.
+- `/hooks` shows `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks from `prompt-english-coach`.
 
 - [ ] **Step 4: Manual behavior check**
 

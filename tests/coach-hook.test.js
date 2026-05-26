@@ -62,6 +62,43 @@ process.stdout.write(JSON.stringify({ result: JSON.stringify(map[key]) }));
   return dir;
 }
 
+function listPendingFiles(dataDir) {
+  const pendingDir = path.join(dataDir, 'pending-feedback');
+  if (!fs.existsSync(pendingDir)) return [];
+  return fs.readdirSync(pendingDir).map(file => path.join(pendingDir, file));
+}
+
+function statMode(targetPath) {
+  return fs.statSync(targetPath).mode & 0o777;
+}
+
+async function storeCoachFeedback({ dataDir, sessionId = 'cleanup-session' }) {
+  const fakeBin = makeFakeClaude({
+    'Can you check if this hook is working good?': {
+      language: 'english',
+      isEnglish: true,
+      isMixed: false,
+      hasMeaningfulIssue: true,
+      severity: 'meaningful',
+      corrected: 'Could you check whether this hook works correctly?',
+      issues: [],
+      hint: 'Use "works correctly", not "is working good".'
+    }
+  });
+
+  return runHook({
+    session_id: sessionId,
+    hook_event_name: 'UserPromptSubmit',
+    prompt: 'Can you check if this hook is working good?'
+  }, {
+    env: {
+      CLAUDE_PLUGIN_OPTION_mode: 'coach',
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir,
+      PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`
+    }
+  });
+}
+
 test('hook allows Russian prompts silently without calling Claude', async () => {
   const result = await runHook({
     hook_event_name: 'UserPromptSubmit',
@@ -231,6 +268,94 @@ test('new prompt clears stale delayed feedback from an interrupted prior turn', 
   });
 
   assert.equal(stopResult.stdout, '');
+});
+
+test('stop failure clears pending feedback without showing it later', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  await storeCoachFeedback({ dataDir, sessionId: 'stop-failure-session' });
+
+  await runHook({
+    session_id: 'stop-failure-session',
+    hook_event_name: 'StopFailure',
+    error: 'server_error'
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  const stopResult = await runHook({
+    session_id: 'stop-failure-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.equal(stopResult.stdout, '');
+});
+
+test('session end clears pending feedback without showing it later', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  await storeCoachFeedback({ dataDir, sessionId: 'session-end-session' });
+
+  await runHook({
+    session_id: 'session-end-session',
+    hook_event_name: 'SessionEnd',
+    reason: 'prompt_input_exit'
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  const stopResult = await runHook({
+    session_id: 'session-end-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.equal(stopResult.stdout, '');
+});
+
+test('pending feedback files are private to the current user', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  await storeCoachFeedback({ dataDir, sessionId: 'mode-session' });
+
+  const pendingDir = path.join(dataDir, 'pending-feedback');
+  const pendingFiles = listPendingFiles(dataDir);
+
+  assert.equal(statMode(pendingDir), 0o700);
+  assert.equal(pendingFiles.length, 1);
+  assert.equal(statMode(pendingFiles[0]), 0o600);
+});
+
+test('stale pending feedback is discarded instead of displayed', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  await storeCoachFeedback({ dataDir, sessionId: 'stale-session' });
+
+  const [pendingFile] = listPendingFiles(dataDir);
+  const staleDate = new Date(Date.now() - 25 * 60 * 60 * 1000);
+  fs.utimesSync(pendingFile, staleDate, staleDate);
+
+  const stopResult = await runHook({
+    session_id: 'stale-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.equal(stopResult.stdout, '');
+  assert.equal(listPendingFiles(dataDir).length, 0);
 });
 
 test('hook blocks meaningful issues in gate mode', async () => {
