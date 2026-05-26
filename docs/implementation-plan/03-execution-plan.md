@@ -823,7 +823,7 @@ Unlike auto-correct plugins, it does not silently rewrite your prompt before Cla
 ## Install
 
 ```text
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
@@ -965,7 +965,7 @@ If the local Claude CLI prints a different success line, record the exact succes
 Inside Claude Code from a separate test session, run:
 
 ```text
-/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```

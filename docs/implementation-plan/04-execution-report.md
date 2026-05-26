@@ -47,7 +47,7 @@ claude plugin validate ./plugins/prompt-english-coach
 The plugin was not installed into the user's Claude Code configuration during implementation because that would modify global Claude settings outside the repository. The repository is ready for local install with:
 
 ```text
-/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 

@@ -25,13 +25,13 @@ gh auth login -h github.com
 Create and push:
 
 ```bash
-gh repo create <github-user>/prompt-english-coach --public --source=. --remote=origin --push
+gh repo create awkoy/prompt-english-coach --public --source=. --remote=origin --push
 ```
 
 Without GitHub CLI:
 
 ```bash
-git remote add origin git@github.com:<github-user>/prompt-english-coach.git
+git remote add origin git@github.com:awkoy/prompt-english-coach.git
 git push -u origin main
 ```
 
@@ -40,7 +40,7 @@ git push -u origin main
 In a fresh Claude Code session:
 
 ```text
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```
@@ -66,6 +66,6 @@ Restart Claude Code after updating.
 ```text
 /plugin uninstall prompt-english-coach@prompt-english-coach
 /plugin marketplace remove prompt-english-coach
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```

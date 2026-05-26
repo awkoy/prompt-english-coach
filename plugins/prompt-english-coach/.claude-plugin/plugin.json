@@ -3,9 +3,11 @@
   "displayName": "Prompt English Coach",
   "description": "A supportive English teacher for Claude Code prompts.",
   "author": {
-    "name": "Prompt English Coach contributors"
+    "name": "awkoy"
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
+  "homepage": "https://github.com/awkoy/prompt-english-coach",
+  "repository": "https://github.com/awkoy/prompt-english-coach",
   "license": "MIT",
   "keywords": ["english", "coach", "writing", "prompt", "hook"],
   "userConfig": {

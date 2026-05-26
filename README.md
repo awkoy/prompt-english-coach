@@ -11,7 +11,7 @@ Unlike auto-correct plugins, Prompt English Coach does not silently replace your
 Install from the marketplace repo:
 
 ```text
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
@@ -75,18 +75,18 @@ Gate modes do not block minor style preferences.
 From GitHub:
 
 ```text
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
-For local development:
+For local development from a clone:
 
 ```text
-/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
+/plugin marketplace add /absolute/path/to/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
-On macOS, Claude Code may not be allowed to read plugin marketplaces directly from `~/Documents` unless you grant broader privacy access. A path under `/Users/awkoy/WORK` avoids that local TCC issue.
+On macOS, Claude Code may not be allowed to read plugin marketplaces directly from `~/Documents` unless you grant broader privacy access. If local install fails with `EPERM`, move the clone outside protected folders or install from GitHub instead.
 
 Claude Code will prompt for `mode` when the plugin is enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
 
@@ -113,7 +113,7 @@ Clean reinstall:
 ```text
 /plugin uninstall prompt-english-coach@prompt-english-coach
 /plugin marketplace remove prompt-english-coach
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
@@ -221,7 +221,7 @@ claude plugin validate ./plugins/prompt-english-coach
 Before release, also run an interactive local install check:
 
 ```text
-/plugin marketplace add /Users/awkoy/WORK/prompt-english-coach
+/plugin marketplace add /absolute/path/to/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```
@@ -239,20 +239,20 @@ gh auth login -h github.com
 2. Create and push the GitHub repository:
 
 ```bash
-gh repo create <github-user>/prompt-english-coach --public --source=. --remote=origin --push
+gh repo create awkoy/prompt-english-coach --public --source=. --remote=origin --push
 ```
 
 Without GitHub CLI:
 
 ```bash
-git remote add origin git@github.com:<github-user>/prompt-english-coach.git
+git remote add origin git@github.com:awkoy/prompt-english-coach.git
 git push -u origin main
 ```
 
 3. Verify install from GitHub in a fresh Claude Code session:
 
 ```text
-/plugin marketplace add <github-user>/prompt-english-coach
+/plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```

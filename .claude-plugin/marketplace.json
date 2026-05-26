@@ -1,7 +1,7 @@
 {
   "name": "prompt-english-coach",
   "owner": {
-    "name": "Prompt English Coach contributors"
+    "name": "awkoy"
   },
   "description": "Claude Code plugins for deliberate English practice in prompts.",
   "plugins": [
@@ -9,6 +9,12 @@
       "name": "prompt-english-coach",
       "source": "./plugins/prompt-english-coach",
       "description": "A supportive English teacher for Claude Code prompts.",
+      "version": "0.1.4",
+      "author": {
+        "name": "awkoy"
+      },
+      "homepage": "https://github.com/awkoy/prompt-english-coach",
+      "repository": "https://github.com/awkoy/prompt-english-coach",
       "license": "MIT",
       "keywords": ["english", "writing", "prompts", "learning", "hooks"],
       "category": "productivity"
