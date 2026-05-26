@@ -61,7 +61,7 @@ This delayed path keeps non-blocking feedback out of the `UserPromptSubmit` stdo
 
 ## Configuration
 
-The plugin prompts for one text option when enabled. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
+The plugin prompts for one text option when enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
 
 - `coach`: corrected version and one to three explanations
 - `gentle`: one short hint

@@ -44,7 +44,7 @@ For local development:
 
 On macOS, Claude Code may not be allowed to read plugin marketplaces directly from `~/Documents` unless you grant broader privacy access. A path under `/Users/awkoy/WORK` avoids that local TCC issue.
 
-Claude Code will prompt for `mode` when the plugin is enabled. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so type one of:
+Claude Code will prompt for `mode` when the plugin is enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
 
 - `coach` - corrected version and one to three explanations
 - `gentle` - one short hint

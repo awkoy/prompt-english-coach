@@ -171,8 +171,8 @@ The plugin manifest declares `userConfig.mode`:
 ```json
 {
   "type": "string",
-  "title": "Coaching mode: coach, gentle, gate, or strict",
-  "description": "Type one value. coach = corrected version + explanations, gentle = one short hint, gate = block meaningful issues, strict = gate with fuller feedback.",
+  "title": "Coaching mode (default: coach)",
+  "description": "Leave as coach for the recommended default. Options: coach = corrected version + explanations after the answer, gentle = one short hint, gate = block meaningful issues, strict = gate with fuller feedback.",
   "default": "coach",
   "required": true
 }
