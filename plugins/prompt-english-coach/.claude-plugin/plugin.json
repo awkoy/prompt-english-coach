@@ -1,11 +1,11 @@
 {
   "name": "prompt-english-coach",
   "displayName": "Prompt English Coach",
-  "description": "A supportive English teacher for Claude Code prompts.",
+  "description": "Turns Claude Code prompts into supportive English lessons without auto-correcting them.",
   "author": {
     "name": "awkoy"
   },
-  "version": "0.1.4",
+  "version": "0.1.5",
   "homepage": "https://github.com/awkoy/prompt-english-coach",
   "repository": "https://github.com/awkoy/prompt-english-coach",
   "license": "MIT",

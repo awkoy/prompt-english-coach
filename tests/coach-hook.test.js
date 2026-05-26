@@ -164,6 +164,7 @@ test('hook stores delayed feedback for coach mode and keeps UserPromptSubmit std
   assert.equal(stopResult.code, 0);
   const output = JSON.parse(stopResult.stdout);
   assert.match(output.systemMessage, /^English Coach\n/);
+  assert.match(output.systemMessage, /Your prompt:\n"Can you check if this hook is working good\?"/);
   assert.match(output.systemMessage, /Suggested version/);
   assert.match(output.systemMessage, /Could you check whether this hook works correctly/);
   assert.equal(output.suppressOutput, true);

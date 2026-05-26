@@ -10,6 +10,7 @@
 - Implemented internal Claude evaluator prompt construction.
 - Implemented strict evaluator JSON parsing.
 - Implemented delayed user-visible `systemMessage` feedback for `gentle` and `coach` after the main Claude answer.
+- Added a user-visible `Your prompt` block so feedback compares the original prompt with the suggested version.
 - Implemented `decision: "block"` feedback for `gate` and `strict`.
 - Implemented fail-open behavior when the evaluator cannot run.
 - Added privacy hardening with `suppressOutput: true` for structured hook feedback.
@@ -31,6 +32,7 @@ The test suite covers these flows:
 - Evaluator unavailable: hook exits successfully with no output so the coding workflow continues.
 - Malformed evaluator severity with `hasMeaningfulIssue: true`: gate mode still blocks.
 - Oversized prompts: evaluator input is capped while the original submitted prompt remains unchanged.
+- Long displayed `Your prompt` blocks: feedback truncates the comparison text to 240 characters.
 
 ## Validation Commands
 

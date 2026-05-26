@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="430" viewBox="0 0 980 430" role="img" aria-label="Prompt English Coach gate mode terminal preview">
+  <rect width="980" height="430" rx="18" fill="#111827"/>
+  <rect x="24" y="22" width="932" height="34" rx="10" fill="#1f2937"/>
+  <circle cx="48" cy="39" r="6" fill="#ef4444"/>
+  <circle cx="70" cy="39" r="6" fill="#f59e0b"/>
+  <circle cx="92" cy="39" r="6" fill="#10b981"/>
+  <text x="122" y="44" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#cbd5e1">Claude Code</text>
+
+  <text x="42" y="96" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e5e7eb">&gt; Could you check if this hook is working good?</text>
+
+  <rect x="42" y="136" width="896" height="250" rx="12" fill="#0f172a" stroke="#7f1d1d"/>
+  <text x="72" y="174" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18" font-weight="700" fill="#f8fafc">English Coach</text>
+  <text x="72" y="206" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#fecaca">Please rewrite this before I continue.</text>
+  <text x="72" y="256" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#94a3b8">Your prompt:</text>
+  <text x="72" y="284" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#cbd5e1">&quot;Could you check if this hook is working good?&quot;</text>
+  <text x="72" y="334" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#94a3b8">Suggested version:</text>
+  <text x="72" y="362" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#e5e7eb">&quot;Could you check whether this hook works correctly?&quot;</text>
+</svg>

@@ -102,14 +102,28 @@ test('buildEvaluatorPrompt caps very large prompts before CLI execution', () => 
 
 test('buildFeedback creates gentle feedback', () => {
   const feedback = buildFeedback('gentle', {
+    originalPrompt: 'Could you help me to fixing this component?',
     corrected: 'Could you help me fix this component?',
     hint: 'Use "help me fix", not "help me to fixing".',
     issues: []
   });
 
   assert.match(feedback, /^English Coach\n/);
+  assert.match(feedback, /Your prompt:\n"Could you help me to fixing this component\?"/);
   assert.match(feedback, /Try: "Could you help me fix this component\?"/);
   assert.match(feedback, /Why: use "help me fix"/i);
+});
+
+test('buildFeedback truncates long original prompts', () => {
+  const feedback = buildFeedback('coach', {
+    originalPrompt: `${'a'.repeat(260)} is working good?`,
+    corrected: 'Could you check whether this works correctly?',
+    hint: 'Use "works correctly", not "is working good".',
+    issues: []
+  });
+
+  assert.match(feedback, /Your prompt:\n"a{237}\.\.\."/);
+  assert.doesNotMatch(feedback, /a{260}/);
 });
 
 test('buildHookOutput allows clean English silently', () => {
@@ -163,6 +177,7 @@ test('buildHookOutput allows coach feedback silently so UserPromptSubmit does no
 
 test('buildDelayedFeedback returns coach feedback for later display', () => {
   const feedback = buildDelayedFeedback('coach', {
+    originalPrompt: 'Can you check if this hook is working good?',
     isEnglish: true,
     isMixed: false,
     severity: 'meaningful',
@@ -180,6 +195,7 @@ test('buildDelayedFeedback returns coach feedback for later display', () => {
   });
 
   assert.match(feedback, /^English Coach\n/);
+  assert.match(feedback, /Your prompt:\n"Can you check if this hook is working good\?"/);
   assert.match(feedback, /Suggested version/);
   assert.match(feedback, /Works correctly/);
 });
@@ -200,6 +216,7 @@ test('buildDelayedFeedback skips gate mode because gate feedback is immediate on
 
 test('buildHookOutput blocks meaningful issues in gate mode', () => {
   const output = buildHookOutput('gate', {
+    originalPrompt: 'Can you check if this hook is working good?',
     isEnglish: true,
     isMixed: false,
     severity: 'meaningful',
@@ -220,6 +237,7 @@ test('buildHookOutput blocks meaningful issues in gate mode', () => {
   assert.equal(output.suppressOriginalPrompt, true);
   assert.equal(output.suppressOutput, true);
   assert.match(output.reason, /^English Coach\nPlease rewrite this before I continue/);
+  assert.match(output.reason, /Your prompt:\n"Can you check if this hook is working good\?"/);
   assert.match(output.reason, /Suggested version/);
 });
 

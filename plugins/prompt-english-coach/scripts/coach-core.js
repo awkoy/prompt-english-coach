@@ -3,6 +3,7 @@
 const VALID_MODES = new Set(['gentle', 'coach', 'gate', 'strict']);
 const VALID_SEVERITIES = new Set(['none', 'minor', 'meaningful']);
 const MAX_EVALUATED_PROMPT_CHARS = 6000;
+const MAX_FEEDBACK_PROMPT_CHARS = 240;
 
 function normalizeMode(value) {
   const normalized = String(value || '').trim().toLowerCase();
@@ -93,6 +94,7 @@ function parseEvaluatorJson(value) {
   const severity = VALID_SEVERITIES.has(parsed.severity) ? parsed.severity : 'none';
 
   return {
+    originalPrompt: String(parsed.originalPrompt || ''),
     language: String(parsed.language || ''),
     isEnglish: parsed.isEnglish === true,
     isMixed: parsed.isMixed === true,
@@ -115,8 +117,21 @@ function quoteIfNeeded(value) {
   return `"${text}"`;
 }
 
+function truncateForFeedback(value) {
+  const text = cleanLine(value);
+  if (text.length <= MAX_FEEDBACK_PROMPT_CHARS) return text;
+  return `${text.slice(0, MAX_FEEDBACK_PROMPT_CHARS - 3)}...`;
+}
+
+function appendOriginalPrompt(lines, originalPrompt) {
+  const prompt = truncateForFeedback(originalPrompt);
+  if (!prompt) return;
+  lines.push('', 'Your prompt:', quoteIfNeeded(prompt));
+}
+
 function buildFeedback(modeValue, evaluation) {
   const mode = normalizeMode(modeValue);
+  const originalPrompt = evaluation.originalPrompt || '';
   const corrected = cleanLine(evaluation.corrected);
   const hint = cleanLine(evaluation.hint);
   const maxIssues = mode === 'strict' ? 4 : 3;
@@ -124,12 +139,14 @@ function buildFeedback(modeValue, evaluation) {
 
   if (mode === 'gentle') {
     const lines = ['English Coach'];
+    appendOriginalPrompt(lines, originalPrompt);
     if (corrected) lines.push(`Try: ${quoteIfNeeded(corrected)}`);
     if (hint) lines.push(`Why: ${hint}`);
     return lines.join('\n');
   }
 
   const lines = ['English Coach'];
+  appendOriginalPrompt(lines, originalPrompt);
   if (corrected) {
     lines.push('', 'Suggested version:', quoteIfNeeded(corrected));
   }
@@ -228,7 +245,8 @@ function buildEvaluatorPrompt(userPrompt) {
     'Minor means style preference or harmless awkward phrasing.',
     'Gate modes must block only meaningful issues.',
     '',
-    'Required JSON keys: language, isEnglish, isMixed, hasMeaningfulIssue, severity, corrected, issues, hint.',
+    'Required JSON keys: originalPrompt, language, isEnglish, isMixed, hasMeaningfulIssue, severity, corrected, issues, hint.',
+    'originalPrompt must repeat the user prompt exactly as provided in the JSON string, truncated only if the input was already truncated.',
     'issues must be an array of objects with kind, original, suggestion, explanation.',
     '',
     `User prompt JSON string: ${promptJson}`
@@ -244,5 +262,6 @@ module.exports = {
   buildFeedback,
   buildHookOutput,
   buildDelayedFeedback,
-  preparePromptForEvaluation
+  preparePromptForEvaluation,
+  truncateForFeedback
 };

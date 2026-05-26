@@ -3,13 +3,13 @@
   "owner": {
     "name": "awkoy"
   },
-  "description": "Claude Code plugins for deliberate English practice in prompts.",
+  "description": "Claude Code plugins that turn English prompts into deliberate language practice.",
   "plugins": [
     {
       "name": "prompt-english-coach",
       "source": "./plugins/prompt-english-coach",
-      "description": "A supportive English teacher for Claude Code prompts.",
-      "version": "0.1.4",
+      "description": "Turns Claude Code prompts into supportive English lessons without auto-correcting them.",
+      "version": "0.1.5",
       "author": {
         "name": "awkoy"
       },

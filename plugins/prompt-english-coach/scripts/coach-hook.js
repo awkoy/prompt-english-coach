@@ -194,6 +194,7 @@ async function handleUserPromptSubmit(input) {
   try {
     const raw = await runClaudeEvaluator(buildEvaluatorPrompt(prompt));
     const evaluation = parseEvaluatorJson(extractClaudeResult(raw));
+    evaluation.originalPrompt = prompt;
     const output = buildHookOutput(mode, evaluation);
     if (output) {
       process.stdout.write(`${JSON.stringify(output)}\n`);

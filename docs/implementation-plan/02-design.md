@@ -186,6 +186,7 @@ The internal Claude evaluator must return only JSON:
 
 ```json
 {
+  "originalPrompt": "Can you check if this hook is working good?",
   "language": "english",
   "isEnglish": true,
   "isMixed": false,
@@ -226,6 +227,10 @@ Accepted header format:
 
 ```text
 English Coach
+
+Your prompt:
+"Could you help me to fixing this component?"
+
 Try: "Could you help me fix this component?"
 Why: use "help me fix", not "help me to fixing".
 ```
@@ -235,6 +240,9 @@ Gate header format:
 ```text
 English Coach
 Please rewrite this before I continue.
+
+Your prompt:
+"Could you check if this hook is working good?"
 
 Suggested version:
 "Could you check whether this hook works correctly?"
@@ -256,6 +264,7 @@ This is necessary because a language coach should not break a coding session due
 - It must not write prompt text to logs by default.
 - It must set `PROMPT_ENGLISH_COACH_INTERNAL=1` when invoking Claude CLI to avoid recursive coaching.
 - It may write short pending feedback to the plugin data directory when available, otherwise to the OS temp directory.
+- User-visible feedback should include a short `Your prompt` block before the suggested version so users can compare the original with the correction. This block is capped at 240 characters.
 - Pending feedback directories must be `0700`, files must be `0600`, files must expire after 24 hours, and cleanup must run on `Stop`, `StopFailure`, and `SessionEnd`.
 - It must not execute shell commands derived from the user prompt.
 - It must use `child_process.spawn` with argument arrays, not shell interpolation.

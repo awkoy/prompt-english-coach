@@ -2,6 +2,8 @@
 
 A supportive English teacher for Claude Code prompts.
 
+Prompt English Coach turns English prompts into tiny lessons without auto-correcting or replacing what you send to Claude. In the recommended `coach` mode, Claude answers first, then the plugin shows the original prompt next to a better version so the difference is easy to learn.
+
 ## Fast On/Off
 
 Disable:
@@ -21,6 +23,7 @@ Enable:
 - Checks prompts that are primarily English.
 - Ignores Russian, non-English, and mixed-language prompts.
 - Gives concise, practical feedback.
+- Shows your original prompt next to the suggested version.
 - Never auto-corrects the prompt before Claude sees it.
 - Can block meaningful grammar or clarity issues in gate modes.
 
@@ -37,12 +40,20 @@ Gate modes do not block minor style preferences.
 
 ## Examples
 
-Gentle:
+Coach:
 
 ```text
 English Coach
-Try: "Could you help me fix this component?"
-Why: use "help me fix", not "help me to fixing".
+
+Your prompt:
+"Can you calculate 17 plus 28 and answer only with the number? I doesnt need explanation."
+
+Suggested version:
+"Can you calculate 17 plus 28 and answer only with the number? I don't need an explanation."
+
+Focus:
+- Use "don't" with "I".
+- Add "an" before "explanation".
 ```
 
 Gate:
@@ -50,6 +61,9 @@ Gate:
 ```text
 English Coach
 Please rewrite this before I continue.
+
+Your prompt:
+"Could you check if this hook is working good?"
 
 Suggested version:
 "Could you check whether this hook works correctly?"
@@ -75,7 +89,7 @@ This delayed path keeps non-blocking feedback out of the `UserPromptSubmit` stdo
 
 ## Configuration
 
-The plugin prompts for one text option when enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns.
+The plugin prompts for one text option when enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so this field cannot be a native select yet.
 
 - `coach`: corrected version and one to three explanations
 - `gentle`: one short hint
@@ -97,5 +111,7 @@ If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPr
 If the internal Claude evaluator fails, the hook allows the prompt to continue. This prevents the coach from breaking the coding workflow.
 
 If prompts are very large, the plugin only sends the first 6,000 characters to the internal English evaluator. Your original prompt still continues unchanged in non-blocking modes.
+
+The displayed `Your prompt` block is capped at 240 characters so long prompts do not flood the terminal.
 
 Delayed feedback is stored briefly in a user-private pending file and expires after 24 hours.
