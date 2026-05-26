@@ -1,10 +1,33 @@
 # Prompt English Coach
 
-Prompt English Coach is a Claude Code plugin that turns English prompts into small language lessons.
+Prompt English Coach is a Claude Code plugin that turns English prompts into small language lessons without auto-rewriting what you send to Claude.
 
 It is built for deliberate practice, not auto-correction. The plugin checks prompts that are primarily English, gives short teacher-style feedback, and can ask you to rewrite unclear prompts yourself before Claude continues.
 
 Unlike auto-correct plugins, Prompt English Coach does not silently replace your prompt before Claude sees it.
+
+## Quick Start
+
+Install from the marketplace repo:
+
+```text
+/plugin marketplace add <github-user>/prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+```
+
+When Claude Code asks for `mode`, leave the default:
+
+```text
+coach
+```
+
+Restart Claude Code after install so hooks are loaded. Then check:
+
+```text
+/hooks
+```
+
+You should see `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks from `prompt-english-coach`.
 
 ## Features
 
@@ -14,6 +37,27 @@ Unlike auto-correct plugins, Prompt English Coach does not silently replace your
 - Supports non-blocking and blocking practice modes.
 - Uses your existing Claude Code auth through the local `claude` CLI.
 - Requires no separate OpenAI or Anthropic API key.
+
+## Fast On/Off
+
+Temporarily disable the coach:
+
+```text
+/plugin disable prompt-english-coach@prompt-english-coach
+```
+
+Enable it again:
+
+```text
+/plugin enable prompt-english-coach@prompt-english-coach
+```
+
+You can also do the same from a shell:
+
+```bash
+claude plugin disable prompt-english-coach@prompt-english-coach
+claude plugin enable prompt-english-coach@prompt-english-coach
+```
 
 ## Modes
 
@@ -28,7 +72,7 @@ Gate modes do not block minor style preferences.
 
 ## Install
 
-After publishing this repository to GitHub:
+From GitHub:
 
 ```text
 /plugin marketplace add <github-user>/prompt-english-coach
@@ -52,6 +96,26 @@ Claude Code will prompt for `mode` when the plugin is enabled. The default is `c
 - `strict` - gate behavior with fuller feedback
 
 If the mode is empty or invalid, the hook falls back to `coach`.
+
+## Update or Reset
+
+Update after a new release:
+
+```text
+/plugin marketplace update prompt-english-coach
+/plugin update prompt-english-coach@prompt-english-coach
+```
+
+Restart Claude Code after updating. Claude Code only updates versioned plugins when the plugin version changes, so each release should bump `plugins/prompt-english-coach/.claude-plugin/plugin.json`.
+
+Clean reinstall:
+
+```text
+/plugin uninstall prompt-english-coach@prompt-english-coach
+/plugin marketplace remove prompt-english-coach
+/plugin marketplace add <github-user>/prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+```
 
 ## Examples
 
@@ -163,6 +227,45 @@ Before release, also run an interactive local install check:
 ```
 
 Confirm that `/hooks` shows `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks and that the selected `mode` appears in the plugin setup flow.
+
+## Publish
+
+1. Authenticate GitHub CLI:
+
+```bash
+gh auth login -h github.com
+```
+
+2. Create and push the GitHub repository:
+
+```bash
+gh repo create <github-user>/prompt-english-coach --public --source=. --remote=origin --push
+```
+
+Without GitHub CLI:
+
+```bash
+git remote add origin git@github.com:<github-user>/prompt-english-coach.git
+git push -u origin main
+```
+
+3. Verify install from GitHub in a fresh Claude Code session:
+
+```text
+/plugin marketplace add <github-user>/prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+/hooks
+```
+
+4. For every release:
+
+```bash
+npm run validate
+claude plugin validate . --strict
+claude plugin validate ./plugins/prompt-english-coach --strict
+```
+
+Bump the plugin version before publishing changes. Users can then run `/plugin update prompt-english-coach@prompt-english-coach` and restart Claude Code.
 
 ## License
 

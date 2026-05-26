@@ -2,6 +2,20 @@
 
 A supportive English teacher for Claude Code prompts.
 
+## Fast On/Off
+
+Disable:
+
+```text
+/plugin disable prompt-english-coach@prompt-english-coach
+```
+
+Enable:
+
+```text
+/plugin enable prompt-english-coach@prompt-english-coach
+```
+
 ## What it does
 
 - Checks prompts that are primarily English.
