@@ -4,7 +4,7 @@
 
 The repository is a Claude Code plugin marketplace. The root `.claude-plugin/marketplace.json` exposes one plugin, `prompt-english-coach`, from `plugins/prompt-english-coach`.
 
-The plugin uses a `UserPromptSubmit` hook. The hook is implemented as a command hook that runs a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
+The plugin uses the standard auto-discovered `hooks/hooks.json` file for a `UserPromptSubmit` hook. The hook is implemented as a command hook that runs a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
 
 ## Why Command Hook Instead of Pure Prompt Hook
 

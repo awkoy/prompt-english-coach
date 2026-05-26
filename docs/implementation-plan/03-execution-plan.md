@@ -13,7 +13,7 @@
 ## File Structure
 
 - Create `.claude-plugin/marketplace.json`: marketplace catalog for the repository.
-- Create `plugins/prompt-english-coach/.claude-plugin/plugin.json`: plugin metadata and user configuration.
+- Create `plugins/prompt-english-coach/.claude-plugin/plugin.json`: plugin metadata and user configuration. Do not set `hooks` for the standard `hooks/hooks.json` file because Claude Code loads it automatically.
 - Create `plugins/prompt-english-coach/hooks/hooks.json`: `UserPromptSubmit` hook registration.
 - Create `plugins/prompt-english-coach/scripts/coach-core.js`: pure functions for mode normalization, language heuristics, evaluator prompt construction, evaluator parsing, and hook output formatting.
 - Create `plugins/prompt-english-coach/scripts/coach-hook.js`: stdin/stdout hook executable that calls `coach-core.js` and the local Claude CLI.
@@ -138,7 +138,6 @@ Create `plugins/prompt-english-coach/.claude-plugin/plugin.json`:
   "version": "0.1.0",
   "license": "MIT",
   "keywords": ["english", "coach", "writing", "prompt", "hook"],
-  "hooks": "./hooks/hooks.json",
   "userConfig": {
     "mode": {
       "type": "string",
