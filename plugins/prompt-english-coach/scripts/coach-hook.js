@@ -2,13 +2,18 @@
 'use strict';
 
 const { spawn } = require('node:child_process');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const {
   resolveMode,
   classifyPromptLanguage,
   parseEvaluatorJson,
   buildEvaluatorPrompt,
-  buildHookOutput
+  buildHookOutput,
+  buildDelayedFeedback
 } = require('./coach-core');
 
 function readStdin() {
@@ -72,17 +77,68 @@ function extractClaudeResult(raw) {
   return raw;
 }
 
-async function main() {
-  if (process.env.PROMPT_ENGLISH_COACH_INTERNAL === '1') return;
+function getDataDir() {
+  return (
+    process.env.PROMPT_ENGLISH_COACH_DATA_DIR ||
+    process.env.CLAUDE_PLUGIN_DATA ||
+    path.join(os.tmpdir(), 'prompt-english-coach')
+  );
+}
 
-  let input;
+function getSessionKey(input) {
+  const raw = String(input.session_id || input.transcript_path || input.cwd || 'default');
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function getPendingPath(input) {
+  return path.join(getDataDir(), 'pending-feedback', `${getSessionKey(input)}.json`);
+}
+
+function savePendingFeedback(input, feedback) {
+  if (!feedback) return;
+
+  const pendingPath = getPendingPath(input);
+  fs.mkdirSync(path.dirname(pendingPath), { recursive: true });
+  fs.writeFileSync(pendingPath, JSON.stringify({
+    feedback,
+    createdAt: new Date().toISOString()
+  }));
+}
+
+function consumePendingFeedback(input) {
+  const pendingPath = getPendingPath(input);
+
   try {
-    input = JSON.parse(await readStdin());
+    const payload = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
+    fs.rmSync(pendingPath, { force: true });
+    return typeof payload.feedback === 'string' ? payload.feedback : '';
   } catch {
-    return;
+    return '';
   }
+}
 
-  if (input.hook_event_name !== 'UserPromptSubmit') return;
+function clearPendingFeedback(input) {
+  try {
+    fs.rmSync(getPendingPath(input), { force: true });
+  } catch {
+    // Ignore cleanup failures so the coach never blocks normal prompting.
+  }
+}
+
+function handleStop(input) {
+  if (input.stop_hook_active === true) return;
+
+  const feedback = consumePendingFeedback(input);
+  if (!feedback) return;
+
+  process.stdout.write(`${JSON.stringify({
+    systemMessage: feedback,
+    suppressOutput: true
+  })}\n`);
+}
+
+async function handleUserPromptSubmit(input) {
+  clearPendingFeedback(input);
 
   const prompt = String(input.prompt || '');
   const language = classifyPromptLanguage(prompt);
@@ -94,9 +150,34 @@ async function main() {
     const raw = await runClaudeEvaluator(buildEvaluatorPrompt(prompt));
     const evaluation = parseEvaluatorJson(extractClaudeResult(raw));
     const output = buildHookOutput(mode, evaluation);
-    if (output) process.stdout.write(`${JSON.stringify(output)}\n`);
+    if (output) {
+      process.stdout.write(`${JSON.stringify(output)}\n`);
+      return;
+    }
+
+    savePendingFeedback(input, buildDelayedFeedback(mode, evaluation));
   } catch {
     return;
+  }
+}
+
+async function main() {
+  if (process.env.PROMPT_ENGLISH_COACH_INTERNAL === '1') return;
+
+  let input;
+  try {
+    input = JSON.parse(await readStdin());
+  } catch {
+    return;
+  }
+
+  if (input.hook_event_name === 'Stop') {
+    handleStop(input);
+    return;
+  }
+
+  if (input.hook_event_name === 'UserPromptSubmit') {
+    await handleUserPromptSubmit(input);
   }
 }
 

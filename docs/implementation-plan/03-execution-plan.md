@@ -4,7 +4,7 @@
 
 **Goal:** Build Prompt English Coach as a full working, distributable Claude Code plugin that gives English-learning feedback for English prompts and can gate meaningful grammar or clarity issues.
 
-**Architecture:** The plugin is distributed through a Claude Code marketplace repo. A `UserPromptSubmit` command hook runs a bundled Node.js script, which detects prompt language, invokes the local Claude CLI for structured evaluation, and returns Claude Code hook JSON for user-visible non-blocking feedback or block behavior.
+**Architecture:** The plugin is distributed through a Claude Code marketplace repo. A `UserPromptSubmit` command hook runs a bundled Node.js script, detects prompt language, invokes the local Claude CLI for structured evaluation, blocks gate-mode prompts when needed, and stores non-blocking feedback for a later `Stop` hook.
 
 **Tech Stack:** Claude Code plugin system, Claude Code hooks, Node.js CommonJS, Node built-in `node:test`, JSON manifests.
 

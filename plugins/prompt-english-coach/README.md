@@ -14,8 +14,8 @@ A supportive English teacher for Claude Code prompts.
 
 | Mode | Blocks? | Behavior |
 | --- | --- | --- |
-| `gentle` | No | Shows one short hint. |
-| `coach` | No | Shows a corrected version and one to three explanations. |
+| `gentle` | No | Shows one short hint after Claude finishes answering. |
+| `coach` | No | Shows a corrected version and one to three explanations after Claude finishes answering. |
 | `gate` | Yes, for meaningful issues | Asks you to rewrite the prompt yourself. |
 | `strict` | Yes, for meaningful issues | Same gate threshold with more complete feedback. |
 
@@ -51,10 +51,12 @@ Focus:
 2. Claude Code runs the `UserPromptSubmit` hook before the main Claude request.
 3. The hook ignores Russian, non-English, and mixed prompts.
 4. For English prompts, the hook calls the local `claude` CLI with an internal evaluator prompt.
-5. In `gentle` and `coach`, Claude Code shows feedback as a `systemMessage` and sends your original prompt onward.
-6. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt and ask you to rewrite it yourself.
+5. In `gentle` and `coach`, the hook stores feedback and allows your original prompt silently.
+6. Claude answers your original prompt.
+7. Claude Code fires the `Stop` hook, and the plugin shows the stored feedback as a `systemMessage`.
+8. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt immediately and ask you to rewrite it yourself.
 
-Claude Code may include non-blocking `systemMessage` hook feedback in the current turn's context. The plugin does not auto-correct or replace your submitted prompt, but the visible coaching note may be available to Claude Code as hook context.
+This delayed path keeps non-blocking feedback out of the `UserPromptSubmit` stdout path, where hook output can affect the main Claude turn. The plugin does not auto-correct or replace your submitted prompt.
 
 ## Configuration
 
@@ -75,7 +77,7 @@ Invalid or empty values fall back to `coach`.
 
 ## Troubleshooting
 
-If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit` hook is registered from `prompt-english-coach`.
+If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit` and `Stop` hooks are registered from `prompt-english-coach`.
 
 If the internal Claude evaluator fails, the hook allows the prompt to continue. This prevents the coach from breaking the coding workflow.
 

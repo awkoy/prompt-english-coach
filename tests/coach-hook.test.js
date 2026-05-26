@@ -77,7 +77,8 @@ test('hook allows Russian prompts silently without calling Claude', async () => 
   assert.equal(result.stderr, '');
 });
 
-test('hook returns systemMessage for coach mode and keeps prompt unblocked', async () => {
+test('hook stores delayed feedback for coach mode and keeps UserPromptSubmit stdout empty', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
   const fakeBin = makeFakeClaude({
     'Can you check if this hook is working good?': {
       language: 'english',
@@ -99,22 +100,137 @@ test('hook returns systemMessage for coach mode and keeps prompt unblocked', asy
   });
 
   const result = await runHook({
+    session_id: 'coach-session',
     hook_event_name: 'UserPromptSubmit',
     prompt: 'Can you check if this hook is working good?'
   }, {
     env: {
       CLAUDE_PLUGIN_OPTION_mode: 'coach',
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir,
       PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`
     }
   });
 
   assert.equal(result.code, 0);
-  const output = JSON.parse(result.stdout);
-  assert.equal(output.decision, undefined);
-  assert.equal(output.suppressOutput, true);
+  assert.equal(result.stdout, '');
+
+  const stopResult = await runHook({
+    session_id: 'coach-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.equal(stopResult.code, 0);
+  const output = JSON.parse(stopResult.stdout);
   assert.match(output.systemMessage, /^English Coach\n/);
   assert.match(output.systemMessage, /Suggested version/);
   assert.match(output.systemMessage, /Could you check whether this hook works correctly/);
+  assert.equal(output.suppressOutput, true);
+});
+
+test('stop hook consumes delayed feedback only once', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  const fakeBin = makeFakeClaude({
+    'Can you check if this hook is working good?': {
+      language: 'english',
+      isEnglish: true,
+      isMixed: false,
+      hasMeaningfulIssue: true,
+      severity: 'meaningful',
+      corrected: 'Could you check whether this hook works correctly?',
+      issues: [],
+      hint: 'Use "works correctly", not "is working good".'
+    }
+  });
+
+  await runHook({
+    session_id: 'single-use-session',
+    hook_event_name: 'UserPromptSubmit',
+    prompt: 'Can you check if this hook is working good?'
+  }, {
+    env: {
+      CLAUDE_PLUGIN_OPTION_mode: 'coach',
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir,
+      PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`
+    }
+  });
+
+  const firstStop = await runHook({
+    session_id: 'single-use-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+  const secondStop = await runHook({
+    session_id: 'single-use-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.match(JSON.parse(firstStop.stdout).systemMessage, /^English Coach\n/);
+  assert.equal(secondStop.stdout, '');
+});
+
+test('new prompt clears stale delayed feedback from an interrupted prior turn', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-english-coach-data-'));
+  const fakeBin = makeFakeClaude({
+    'Can you check if this hook is working good?': {
+      language: 'english',
+      isEnglish: true,
+      isMixed: false,
+      hasMeaningfulIssue: true,
+      severity: 'meaningful',
+      corrected: 'Could you check whether this hook works correctly?',
+      issues: [],
+      hint: 'Use "works correctly", not "is working good".'
+    }
+  });
+
+  await runHook({
+    session_id: 'interrupted-session',
+    hook_event_name: 'UserPromptSubmit',
+    prompt: 'Can you check if this hook is working good?'
+  }, {
+    env: {
+      CLAUDE_PLUGIN_OPTION_mode: 'coach',
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir,
+      PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`
+    }
+  });
+
+  await runHook({
+    session_id: 'interrupted-session',
+    hook_event_name: 'UserPromptSubmit',
+    prompt: 'Можешь проверить этот хук?'
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir,
+      PATH: ''
+    }
+  });
+
+  const stopResult = await runHook({
+    session_id: 'interrupted-session',
+    hook_event_name: 'Stop',
+    stop_hook_active: false
+  }, {
+    env: {
+      PROMPT_ENGLISH_COACH_DATA_DIR: dataDir
+    }
+  });
+
+  assert.equal(stopResult.stdout, '');
 });
 
 test('hook blocks meaningful issues in gate mode', async () => {
@@ -139,6 +255,7 @@ test('hook blocks meaningful issues in gate mode', async () => {
   });
 
   const result = await runHook({
+    session_id: 'gate-session',
     hook_event_name: 'UserPromptSubmit',
     prompt: 'Can you check if this hook is working good?'
   }, {

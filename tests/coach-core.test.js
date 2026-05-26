@@ -10,7 +10,8 @@ const {
   parseEvaluatorJson,
   buildEvaluatorPrompt,
   buildFeedback,
-  buildHookOutput
+  buildHookOutput,
+  buildDelayedFeedback
 } = require('../plugins/prompt-english-coach/scripts/coach-core');
 
 test('normalizeMode defaults unknown values to coach', () => {
@@ -121,7 +122,7 @@ test('buildHookOutput allows clean English silently', () => {
   assert.equal(output, null);
 });
 
-test('buildHookOutput adds visible systemMessage in gentle mode', () => {
+test('buildHookOutput allows gentle feedback silently so UserPromptSubmit does not enter context', () => {
   const output = buildHookOutput('gentle', {
     isEnglish: true,
     isMixed: false,
@@ -132,13 +133,10 @@ test('buildHookOutput adds visible systemMessage in gentle mode', () => {
     hint: 'Use "help me fix", not "help me to fixing".'
   });
 
-  assert.match(output.systemMessage, /^English Coach\n/);
-  assert.match(output.systemMessage, /Try:/);
-  assert.equal(output.suppressOutput, true);
-  assert.doesNotMatch(JSON.stringify(output), /"decision":"block"/);
+  assert.equal(output, null);
 });
 
-test('buildHookOutput adds visible systemMessage in coach mode', () => {
+test('buildHookOutput allows coach feedback silently so UserPromptSubmit does not enter context', () => {
   const output = buildHookOutput('coach', {
     isEnglish: true,
     isMixed: false,
@@ -156,10 +154,44 @@ test('buildHookOutput adds visible systemMessage in coach mode', () => {
     hint: 'Use "works correctly", not "is working good".'
   });
 
-  assert.match(output.systemMessage, /Suggested version/);
-  assert.match(output.systemMessage, /Works correctly/);
-  assert.equal(output.suppressOutput, true);
-  assert.equal(output.decision, undefined);
+  assert.equal(output, null);
+});
+
+test('buildDelayedFeedback returns coach feedback for later display', () => {
+  const feedback = buildDelayedFeedback('coach', {
+    isEnglish: true,
+    isMixed: false,
+    severity: 'meaningful',
+    hasMeaningfulIssue: true,
+    corrected: 'Could you check whether this hook works correctly?',
+    issues: [
+      {
+        kind: 'grammar',
+        original: 'is working good',
+        suggestion: 'works correctly',
+        explanation: '"Works correctly" is the natural adverb form here.'
+      }
+    ],
+    hint: 'Use "works correctly", not "is working good".'
+  });
+
+  assert.match(feedback, /^English Coach\n/);
+  assert.match(feedback, /Suggested version/);
+  assert.match(feedback, /Works correctly/);
+});
+
+test('buildDelayedFeedback skips gate mode because gate feedback is immediate only when blocked', () => {
+  const feedback = buildDelayedFeedback('gate', {
+    isEnglish: true,
+    isMixed: false,
+    severity: 'minor',
+    hasMeaningfulIssue: false,
+    corrected: 'Could you review this file?',
+    issues: [],
+    hint: '"Review" is a little more specific than "check".'
+  });
+
+  assert.equal(feedback, null);
 });
 
 test('buildHookOutput blocks meaningful issues in gate mode', () => {

@@ -1,5 +1,5 @@
 {
-  "description": "Prompt English Coach checks English prompts on UserPromptSubmit.",
+  "description": "Prompt English Coach checks English prompts on UserPromptSubmit and displays non-blocking feedback after Stop.",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -10,6 +10,19 @@
             "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/coach-hook.js", "${user_config.mode}"],
             "timeout": 30,
             "statusMessage": "Checking prompt English"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/coach-hook.js", "${user_config.mode}"],
+            "timeout": 5,
+            "statusMessage": "Showing prompt English feedback"
           }
         ]
       }

@@ -4,7 +4,7 @@
 
 The repository is a Claude Code plugin marketplace. The root `.claude-plugin/marketplace.json` exposes one plugin, `prompt-english-coach`, from `plugins/prompt-english-coach`.
 
-The plugin uses the standard auto-discovered `hooks/hooks.json` file for a `UserPromptSubmit` hook. The hook is implemented as a command hook that runs a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
+The plugin uses the standard auto-discovered `hooks/hooks.json` file for `UserPromptSubmit` and `Stop` hooks. Both hooks are implemented as command hooks that run a bundled Node.js script. The script reads Claude Code hook JSON from stdin, decides whether the prompt should be checked, calls Claude CLI for English evaluation, and returns Claude Code hook JSON.
 
 ## Why Command Hook Instead of Pure Prompt Hook
 
@@ -17,7 +17,7 @@ Claude Code supports `type: "prompt"` hooks for `UserPromptSubmit`. Prompt hooks
 }
 ```
 
-That shape is too limited for the full plugin UX. `gentle` and `coach` modes need user-visible non-blocking feedback, and `gate` mode needs stricter output shaping. A command hook can return `systemMessage` for non-blocking teacher feedback or `decision: "block"` for gate behavior.
+That shape is too limited for the full plugin UX. `gate` mode needs strict output shaping with `decision: "block"`, while `gentle` and `coach` modes need user-visible non-blocking feedback. A command hook lets the plugin block immediately in `UserPromptSubmit`, or delay non-blocking feedback until `Stop` so it does not affect the main prompt.
 
 The command hook still uses Claude internally by invoking the authenticated local Claude CLI in print mode. This keeps the "no separate OpenAI API key" requirement while giving us full hook output control.
 
@@ -68,12 +68,13 @@ prompt-english-coach/
    - the prompt is mixed-language enough that feedback would be noisy.
 5. For primarily English prompts, the script calls Claude CLI with an evaluator prompt and the user prompt encoded as a JSON string.
 6. The evaluator returns strict JSON describing language, issue severity, corrected version, explanations, and gate recommendation.
-7. `coach-core.js` maps that evaluation into Claude Code hook output:
-   - `gentle`: allow and show one short hint as `systemMessage`.
-   - `coach`: allow and show corrected version plus one to three explanations as `systemMessage`.
+7. `coach-core.js` maps that evaluation into Claude Code hook behavior:
+   - `gentle`: allow silently and store one short hint for `Stop`.
+   - `coach`: allow silently and store corrected version plus one to three explanations for `Stop`.
    - `gate`: block only meaningful grammar or clarity issues.
    - `strict`: same blocking threshold as gate, with more complete feedback when blocked.
-8. If evaluator execution fails, times out, or returns malformed JSON, the hook fails open and allows the user's prompt.
+8. When Claude Code fires `Stop`, the script consumes the stored feedback once and returns it as `systemMessage`.
+9. If evaluator execution fails, times out, or returns malformed JSON, the hook fails open and allows the user's prompt.
 
 ## User Experience Flow
 
@@ -98,10 +99,13 @@ sequenceDiagram
         Eval-->>Hook: Strict JSON evaluation
 
         alt gentle or coach mode
-            Hook-->>CC: allow + systemMessage feedback
-            CC-->>User: Shows English Coach feedback
+            Hook->>Hook: Save pending feedback for session
+            Hook-->>CC: No output, allow
             CC->>Claude: Original prompt
             Claude-->>User: Normal Claude Code response
+            CC->>Hook: Stop JSON
+            Hook-->>CC: systemMessage feedback
+            CC-->>User: Shows English Coach feedback after answer
         else gate or strict with no meaningful issue
             Hook-->>CC: No output, allow
             CC->>Claude: Original prompt
@@ -121,9 +125,10 @@ In plain words:
 3. The hook decides whether this prompt is English enough to coach.
 4. If not English, nothing happens.
 5. If English, the hook asks a small internal Claude evaluation prompt to inspect the English.
-6. In `gentle` or `coach`, the user sees feedback and the original prompt continues.
-7. In `gate` or `strict`, meaningful grammar or clarity issues block the prompt; minor style preferences do not.
-8. The user rewrites the prompt manually and submits again.
+6. In `gentle` or `coach`, the original prompt continues silently.
+7. After Claude finishes answering, the `Stop` hook shows the saved coaching feedback.
+8. In `gate` or `strict`, meaningful grammar or clarity issues block the prompt; minor style preferences do not.
+9. The user rewrites the prompt manually and submits again.
 
 ## Prompting Layers
 
@@ -148,9 +153,9 @@ Minor means style preference or harmless awkward phrasing.
 Gate modes must block only meaningful issues.
 ```
 
-The main Claude turn receives the user's original prompt. In non-blocking modes, the user-visible coaching message is returned as `systemMessage`; it is not an auto-corrected replacement prompt.
+The main Claude turn receives the user's original prompt. In non-blocking modes, `UserPromptSubmit` returns no stdout; the coaching note is stored temporarily and displayed from the later `Stop` hook. This prevents the coach note from influencing the prompt that triggered it. It is not an auto-corrected replacement prompt.
 
-Claude Code may include `systemMessage` hook output in the current turn's context. This is an explicit platform tradeoff: non-blocking modes can show feedback without rewriting the prompt, but they cannot guarantee the feedback is user-only. Gate modes keep feedback out of the main Claude turn because `decision: "block"` prevents the prompt from continuing.
+Gate modes keep feedback out of the main Claude turn because `decision: "block"` prevents the prompt from continuing.
 
 ## User Configuration
 
@@ -243,6 +248,7 @@ This is necessary because a language coach should not break a coding session due
 - The hook reads prompt text and sends it to the local Claude CLI.
 - It must not write prompt text to logs by default.
 - It must set `PROMPT_ENGLISH_COACH_INTERNAL=1` when invoking Claude CLI to avoid recursive coaching.
+- It may write short pending feedback to the plugin data directory when available, otherwise to the OS temp directory, and must consume it once on `Stop`.
 - It must not execute shell commands derived from the user prompt.
 - It must use `child_process.spawn` with argument arrays, not shell interpolation.
 

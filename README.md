@@ -19,8 +19,8 @@ Unlike auto-correct plugins, Prompt English Coach does not silently replace your
 
 | Mode | Blocks? | Behavior |
 | --- | --- | --- |
-| `gentle` | No | Shows one short hint. |
-| `coach` | No | Shows a corrected version and one to three explanations. |
+| `gentle` | No | Shows one short hint after Claude finishes answering. |
+| `coach` | No | Shows a corrected version and one to three explanations after Claude finishes answering. |
 | `gate` | Yes, for meaningful issues | Asks you to rewrite the prompt yourself. |
 | `strict` | Yes, for meaningful issues | Same gate threshold with more complete feedback. |
 
@@ -97,9 +97,13 @@ sequenceDiagram
         Eval-->>Hook: JSON evaluation
 
         alt gentle or coach
-            Hook-->>CC: Allow + systemMessage feedback
-            CC-->>User: Shows English Coach feedback
+            Hook->>Hook: Save pending feedback for this session
+            Hook-->>CC: Allow silently
             CC->>Main: Original prompt
+            Main-->>CC: Main answer
+            CC->>Hook: Stop
+            Hook-->>CC: systemMessage feedback
+            CC-->>User: Shows English Coach feedback after the answer
         else gate or strict with meaningful issue
             Hook-->>CC: decision=block + reason
             CC-->>User: Asks user to rewrite
@@ -112,7 +116,7 @@ sequenceDiagram
 
 No manual system prompt is required. The plugin is activated by installation and hook registration. The internal teacher instructions live inside the hook script and are sent only to the local Claude evaluator.
 
-Claude Code exposes non-blocking hook feedback through `systemMessage`. That message is shown to the user and may be included in the current turn's context by Claude Code. Prompt English Coach still never rewrites the submitted prompt or sends a corrected replacement as the user prompt.
+Non-blocking feedback is delayed until Claude Code fires the `Stop` hook, after the main answer is finished. This keeps the coach note out of the `UserPromptSubmit` output path, where stdout is added to Claude's context. Prompt English Coach still never rewrites the submitted prompt or sends a corrected replacement as the user prompt.
 
 ## Plugin
 
@@ -127,7 +131,8 @@ See [plugins/prompt-english-coach/README.md](plugins/prompt-english-coach/README
 ## Limitations
 
 - Claude Code controls the visual styling of hook messages. Plugins cannot set a custom color for one `systemMessage`.
-- Non-blocking feedback uses Claude Code `systemMessage`; Claude Code may include that message in the current turn's context.
+- Non-blocking feedback is displayed after the main answer, so it does not affect the prompt that triggered it.
+- The delayed feedback is stored briefly in the plugin data directory when available, otherwise in the OS temp directory, and consumed once by the `Stop` hook.
 - Very large prompts are truncated to the first 6,000 characters for English evaluation only. The original prompt continues unchanged in non-blocking modes.
 - The plugin currently targets Claude Code only.
 
@@ -152,7 +157,7 @@ Before release, also run an interactive local install check:
 /hooks
 ```
 
-Confirm that `/hooks` shows the `UserPromptSubmit` hook and that the selected `mode` appears in the plugin setup flow.
+Confirm that `/hooks` shows both `UserPromptSubmit` and `Stop` hooks and that the selected `mode` appears in the plugin setup flow.
 
 ## License
 

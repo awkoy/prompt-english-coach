@@ -184,10 +184,23 @@ function buildHookOutput(modeValue, evaluation) {
     return null;
   }
 
-  return {
-    systemMessage: buildFeedback(mode, evaluation),
-    suppressOutput: true
-  };
+  return null;
+}
+
+function buildDelayedFeedback(modeValue, evaluation) {
+  const mode = normalizeMode(modeValue);
+
+  if (mode === 'gate' || mode === 'strict') return null;
+
+  if (!evaluation || evaluation.isEnglish !== true || evaluation.isMixed === true) {
+    return null;
+  }
+
+  if ((!evaluation.severity || evaluation.severity === 'none') && !hasMeaningfulIssue(evaluation)) {
+    return null;
+  }
+
+  return buildFeedback(mode, evaluation);
 }
 
 function preparePromptForEvaluation(userPrompt) {
@@ -230,5 +243,6 @@ module.exports = {
   buildEvaluatorPrompt,
   buildFeedback,
   buildHookOutput,
+  buildDelayedFeedback,
   preparePromptForEvaluation
 };
