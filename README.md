@@ -1,253 +1,195 @@
 # Prompt English Coach
 
-Turn your Claude Code prompts into English practice.
+Learn English while you prompt Claude Code.
 
-Prompt English Coach is a Claude Code plugin for developers who write prompts in English and want to get better without leaving the coding flow. It checks English prompts, teaches with short feedback, and can ask you to rewrite unclear prompts yourself.
+Prompt English Coach is a Claude Code plugin for developers who write prompts in English and want short, useful feedback without leaving the terminal. It checks English prompts, teaches with concise corrections, and can optionally block unclear prompts until you rewrite them yourself.
 
-It does **not** auto-correct or replace your prompt before Claude sees it. Claude gets your original words.
+It never auto-corrects or replaces your prompt. Claude gets your original words.
 
-## Quick Start
+## Quick Install
 
-Install from the marketplace repo:
+In Claude Code:
 
 ```text
 /plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 ```
 
-When Claude Code asks for `mode`, leave the default value:
+When Claude Code asks for `mode`, enter:
 
 ```text
 coach
 ```
 
-Restart Claude Code after install, then check:
+Then reload plugins:
+
+```text
+/reload-plugins
+```
+
+Check that it loaded:
 
 ```text
 /hooks
 ```
 
-You should see `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks from `prompt-english-coach`.
+You should see hooks from `prompt-english-coach`: `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd`.
 
 ## Why Use It
 
-- You practice English inside the tool you already use every day.
-- You see the original prompt next to the suggested version, so the lesson is obvious.
-- You keep control: the plugin never silently rewrites your prompt.
-- You can stay low-friction with `coach`, or force deliberate practice with `gate` / `strict`.
+- You practice English inside Claude Code, where you already write prompts.
+- You see your original prompt next to a better version.
+- You get practical grammar and clarity notes, not vague corrections.
+- You can keep it non-blocking, or use a gate mode for deliberate practice.
 - You do not need a separate API key; it uses your existing Claude Code auth through the local `claude` CLI.
+
+## Modes
+
+| Mode | Blocks Claude? | Use it when you want... |
+| --- | --- | --- |
+| `coach` | No | The recommended default. Claude answers first, then you get a corrected version and 1-3 explanations. |
+| `gentle` | No | Very light feedback: one short hint after Claude answers. |
+| `gate` | Yes, for meaningful issues | Deliberate practice. The prompt is blocked until you rewrite it yourself. |
+| `strict` | Yes, for meaningful issues | Gate behavior with fuller feedback. |
+
+Gate modes do not block minor style preferences. They are meant for grammar or clarity issues that could confuse the request.
+
+## Change Mode
+
+Choose the mode during install when Claude Code asks for `mode`.
+
+If you prefer shell commands, install with an explicit mode:
+
+```bash
+claude plugin install prompt-english-coach@prompt-english-coach --config mode=coach
+```
+
+To change mode later, the reliable path is reinstalling with a new `mode` value:
+
+```text
+/plugin uninstall prompt-english-coach@prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+/reload-plugins
+```
+
+Then enter one of:
+
+```text
+coach
+gentle
+gate
+strict
+```
 
 ## Fast On/Off
 
-Disable the coach:
+Disable the coach without uninstalling:
 
 ```text
 /plugin disable prompt-english-coach@prompt-english-coach
+/reload-plugins
 ```
 
 Enable it again:
 
 ```text
 /plugin enable prompt-english-coach@prompt-english-coach
-```
-
-Shell equivalents:
-
-```bash
-claude plugin disable prompt-english-coach@prompt-english-coach
-claude plugin enable prompt-english-coach@prompt-english-coach
+/reload-plugins
 ```
 
 ## What It Looks Like
 
-In the recommended `coach` mode, Claude answers first. The English note appears after the answer, so it does not get mixed into the prompt Claude is answering.
+### Coach Mode: Non-Blocking Feedback
+
+Claude answers your original prompt first. Then the coach note appears after the answer.
 
 ![Coach mode terminal preview](docs/assets/coach-mode-preview.svg)
 
-```text
-> Can you calculate 17 plus 28 and answer only with the number? I doesnt need explanation.
+### Gate / Strict Mode: Rewrite Before Continuing
 
-45
-
-Stop says: English Coach
-
-Your prompt:
-"Can you calculate 17 plus 28 and answer only with the number? I doesnt need explanation."
-
-Suggested version:
-"Can you calculate 17 plus 28 and answer only with the number? I don't need an explanation."
-
-Focus:
-- Use "don't" with "I".
-- Add "an" before "explanation".
-```
-
-In `gate` or `strict`, meaningful grammar or clarity issues stop the turn and ask you to rewrite the prompt yourself:
+If the prompt has a meaningful grammar or clarity issue, Claude Code stops and asks you to rewrite it yourself.
 
 ![Gate mode terminal preview](docs/assets/gate-mode-preview.svg)
 
-```text
-English Coach
-Please rewrite this before I continue.
+## Technical Details
 
-Your prompt:
-"Could you check if this hook is working good?"
+### How It Works
 
-Suggested version:
-"Could you check whether this hook works correctly?"
+1. You write a prompt and press Enter.
+2. Claude Code runs the plugin's `UserPromptSubmit` hook.
+3. The plugin ignores Russian, non-English, mixed-language, and very short prompts.
+4. For English prompts, it calls the local `claude` CLI with an internal teacher prompt.
+5. In `coach` and `gentle`, the plugin stores feedback and lets Claude answer your original prompt.
+6. After Claude finishes, the `Stop` hook displays the English feedback.
+7. In `gate` and `strict`, meaningful issues return `decision: "block"` and Claude does not continue until you rewrite the prompt.
 
-Focus:
-- Use "whether" for indirect yes/no questions.
-- "Works correctly" sounds more natural than "is working good".
-```
+No manual system prompt is required. The teacher instructions live inside the hook script and are sent only to the local evaluator.
 
-Gate modes do not block small style preferences.
+### Why Feedback Appears After the Answer
 
-## Modes
+Non-blocking feedback is delayed until Claude Code fires the `Stop` hook. This keeps the coach note out of the `UserPromptSubmit` output path, where stdout can be added to Claude's context.
 
-| Mode | Blocks? | Best for |
-| --- | --- | --- |
-| `coach` | No | Daily use. Shows a corrected version and one to three explanations after Claude finishes answering. |
-| `gentle` | No | Very low friction. Shows one short hint after Claude finishes answering. |
-| `gate` | Yes, for meaningful issues | Deliberate practice. Blocks unclear prompts and asks you to rewrite them. |
-| `strict` | Yes, for meaningful issues | Same blocking threshold as `gate`, with fuller feedback. |
+In short: `coach` and `gentle` do not affect the prompt that Claude answers.
 
-If the setup field is empty or invalid, the hook falls back to `coach`.
+### Requirements
 
-Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so the setup UI cannot show a native select yet. The plugin makes the default explicit in the field title and description.
+- Claude Code installed and authenticated.
+- Node.js 18 or newer.
+- The `claude` CLI available on `PATH`.
 
-## What Happens After Enter
+### Limitations
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant CC as Claude Code
-    participant Hook as English Coach hook
-    participant Eval as Internal Claude evaluator
-    participant Main as Main Claude
+- Claude Code controls hook message styling. Plugins cannot set a custom color for one `systemMessage`.
+- The displayed `Your prompt` block is capped at 240 characters so long prompts do not flood the terminal.
+- Very large prompts are truncated to the first 6,000 characters for English evaluation only. The original prompt continues unchanged in non-blocking modes.
+- Delayed feedback is stored briefly in the plugin data directory when available, otherwise in the OS temp directory. Files are user-private, expire after 24 hours, and are cleaned up by `Stop`, `StopFailure`, or `SessionEnd`.
+- The plugin currently targets Claude Code only.
 
-    User->>CC: Writes prompt and presses Enter
-    CC->>Hook: UserPromptSubmit with original prompt
-    Hook->>Hook: Detect language
-
-    alt Not English or mixed
-        Hook-->>CC: Allow silently
-        CC->>Main: Original prompt
-    else English
-        Hook->>Eval: Teacher prompt + original prompt
-        Eval-->>Hook: JSON evaluation
-
-        alt gentle or coach
-            Hook->>Hook: Save pending feedback for this session
-            Hook-->>CC: Allow silently
-            CC->>Main: Original prompt
-            Main-->>CC: Main answer
-            CC->>Hook: Stop
-            Hook-->>CC: systemMessage feedback and cleanup
-            CC-->>User: Shows English Coach feedback after the answer
-        else response fails or session ends
-            CC->>Hook: StopFailure or SessionEnd
-            Hook->>Hook: Cleanup pending feedback
-        else gate or strict with meaningful issue
-            Hook-->>CC: decision=block + reason
-            CC-->>User: Asks user to rewrite
-        else gate or strict with no meaningful issue
-            Hook-->>CC: Allow silently
-            CC->>Main: Original prompt
-        end
-    end
-```
-
-No manual system prompt is required. The teacher instructions live inside the hook script and are sent only to the local Claude evaluator.
-
-Non-blocking feedback is delayed until Claude Code fires the `Stop` hook, after the main answer is finished. This keeps the coach note out of the `UserPromptSubmit` output path, where stdout can be added to Claude's context.
-
-## Install From a Local Clone
+### Install From a Local Clone
 
 ```text
 /plugin marketplace add /absolute/path/to/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
+/reload-plugins
 ```
 
 On macOS, Claude Code may not be allowed to read plugin marketplaces directly from `~/Documents` unless you grant broader privacy access. If local install fails with `EPERM`, move the clone outside protected folders or install from GitHub instead.
 
-## Update or Reset
-
-Update after a new release:
+### Update
 
 ```text
 /plugin marketplace update prompt-english-coach
 /plugin update prompt-english-coach@prompt-english-coach
+/reload-plugins
 ```
 
-Restart Claude Code after updating. Claude Code only updates versioned plugins when the plugin version changes.
+If the update does not apply in the current session, restart Claude Code.
 
-Clean reinstall:
+### Clean Reset
 
 ```text
 /plugin uninstall prompt-english-coach@prompt-english-coach
 /plugin marketplace remove prompt-english-coach
 /plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
+/reload-plugins
 ```
-
-## Requirements
-
-- Claude Code installed and authenticated.
-- Node.js 18 or newer.
-- The `claude` CLI available on `PATH`.
-
-## Limitations
-
-- Claude Code controls the visual styling of hook messages. Plugins cannot set a custom color for one `systemMessage`.
-- Non-blocking feedback is displayed after the main answer, so it does not affect the prompt that triggered it.
-- The delayed feedback is stored briefly in the plugin data directory when available, otherwise in the OS temp directory. Files are user-private, expire after 24 hours, and are cleaned up by `Stop`, `StopFailure`, or `SessionEnd`.
-- Very large prompts are truncated to the first 6,000 characters for English evaluation only. The original prompt continues unchanged in non-blocking modes.
-- The displayed `Your prompt` block is capped at 240 characters so long prompts do not flood the terminal.
-- The plugin currently targets Claude Code only.
 
 ## Development
 
 ```bash
 npm run validate
-```
-
-To validate with Claude Code:
-
-```bash
 claude plugin validate . --strict
 claude plugin validate ./plugins/prompt-english-coach --strict
 ```
 
-Before release, also run an interactive local install check:
-
-```text
-/plugin marketplace add /absolute/path/to/prompt-english-coach
-/plugin install prompt-english-coach@prompt-english-coach
-/hooks
-```
-
-Confirm that `/hooks` shows `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks and that the selected `mode` appears in the plugin setup flow.
-
-## Publish
-
-Create or update the public repository, then verify install from a fresh Claude Code session:
+Before release, verify install from a fresh Claude Code session:
 
 ```text
 /plugin marketplace add awkoy/prompt-english-coach
 /plugin install prompt-english-coach@prompt-english-coach
 /hooks
 ```
-
-For every release:
-
-```bash
-npm run validate
-claude plugin validate . --strict
-claude plugin validate ./plugins/prompt-english-coach --strict
-```
-
-Bump the plugin version before publishing changes. Users can then run `/plugin update prompt-english-coach@prompt-english-coach` and restart Claude Code.
 
 ## License
 

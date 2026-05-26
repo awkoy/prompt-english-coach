@@ -5,6 +5,8 @@
   <circle cx="70" cy="39" r="6" fill="#f59e0b"/>
   <circle cx="92" cy="39" r="6" fill="#10b981"/>
   <text x="122" y="44" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#cbd5e1">Claude Code</text>
+  <rect x="742" y="30" width="186" height="26" rx="13" fill="#991b1b"/>
+  <text x="762" y="49" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#fee2e2">gate / strict mode</text>
 
   <text x="42" y="96" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e5e7eb">&gt; Could you check if this hook is working good?</text>
 

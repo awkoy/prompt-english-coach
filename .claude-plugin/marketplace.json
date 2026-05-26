@@ -9,7 +9,7 @@
       "name": "prompt-english-coach",
       "source": "./plugins/prompt-english-coach",
       "description": "Turns Claude Code prompts into supportive English lessons without auto-correcting them.",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "author": {
         "name": "awkoy"
       },

@@ -1,62 +1,86 @@
 # Prompt English Coach
 
-A supportive English teacher for Claude Code prompts.
+Learn English while you prompt Claude Code.
 
-Prompt English Coach turns English prompts into tiny lessons without auto-correcting or replacing what you send to Claude. In the recommended `coach` mode, Claude answers first, then the plugin shows the original prompt next to a better version so the difference is easy to learn.
+Prompt English Coach checks English prompts, gives concise teacher-style feedback, and never auto-corrects or replaces what you send to Claude.
 
-## Fast On/Off
+## Quick Setup
 
-Disable:
-
-```text
-/plugin disable prompt-english-coach@prompt-english-coach
-```
-
-Enable:
+Recommended mode:
 
 ```text
-/plugin enable prompt-english-coach@prompt-english-coach
+coach
 ```
 
-## What it does
+After installing or changing the plugin, run:
 
-- Checks prompts that are primarily English.
-- Ignores Russian, non-English, and mixed-language prompts.
-- Gives concise, practical feedback.
-- Shows your original prompt next to the suggested version.
-- Never auto-corrects the prompt before Claude sees it.
-- Can block meaningful grammar or clarity issues in gate modes.
+```text
+/reload-plugins
+```
 
 ## Modes
 
-| Mode | Blocks? | Behavior |
+| Mode | Blocks Claude? | Behavior |
 | --- | --- | --- |
-| `gentle` | No | Shows one short hint after Claude finishes answering. |
-| `coach` | No | Shows a corrected version and one to three explanations after Claude finishes answering. |
-| `gate` | Yes, for meaningful issues | Asks you to rewrite the prompt yourself. |
-| `strict` | Yes, for meaningful issues | Same gate threshold with more complete feedback. |
+| `coach` | No | Recommended. Claude answers first, then you get a corrected version and 1-3 explanations. |
+| `gentle` | No | One short hint after Claude answers. |
+| `gate` | Yes, for meaningful issues | Blocks unclear prompts and asks you to rewrite them yourself. |
+| `strict` | Yes, for meaningful issues | Gate behavior with fuller feedback. |
 
 Gate modes do not block minor style preferences.
 
-## Examples
+## Change Mode
 
-Coach:
+Choose the mode when Claude Code asks for `mode` during install.
+
+To change mode later, reinstall and enter a new value:
 
 ```text
-English Coach
+/plugin uninstall prompt-english-coach@prompt-english-coach
+/plugin install prompt-english-coach@prompt-english-coach
+/reload-plugins
+```
+
+Valid values:
+
+```text
+coach
+gentle
+gate
+strict
+```
+
+## Fast On/Off
+
+```text
+/plugin disable prompt-english-coach@prompt-english-coach
+/reload-plugins
+```
+
+```text
+/plugin enable prompt-english-coach@prompt-english-coach
+/reload-plugins
+```
+
+## What You See
+
+In `coach` mode, feedback appears after Claude's answer:
+
+```text
+Stop says: English Coach
 
 Your prompt:
-"Can you calculate 17 plus 28 and answer only with the number? I doesnt need explanation."
+"I doesnt need explanation."
 
 Suggested version:
-"Can you calculate 17 plus 28 and answer only with the number? I don't need an explanation."
+"I don't need an explanation."
 
 Focus:
 - Use "don't" with "I".
 - Add "an" before "explanation".
 ```
 
-Gate:
+In `gate` or `strict`, meaningful issues block the prompt:
 
 ```text
 English Coach
@@ -67,51 +91,12 @@ Your prompt:
 
 Suggested version:
 "Could you check whether this hook works correctly?"
-
-Focus:
-- Use "whether" for indirect yes/no questions.
-- "Works correctly" sounds more natural than "is working good".
 ```
 
-## What happens after Enter
+## Technical Notes
 
-1. You write a prompt and press Enter.
-2. Claude Code runs the `UserPromptSubmit` hook before the main Claude request.
-3. The hook ignores Russian, non-English, and mixed prompts.
-4. For English prompts, the hook calls the local `claude` CLI with an internal evaluator prompt.
-5. In `gentle` and `coach`, the hook stores feedback and allows your original prompt silently.
-6. Claude answers your original prompt.
-7. Claude Code fires the `Stop` hook, and the plugin shows the stored feedback as a `systemMessage`.
-8. If the response fails or the session ends before `Stop`, `StopFailure` or `SessionEnd` cleans up pending feedback without showing it later.
-9. In `gate` and `strict`, meaningful grammar or clarity issues block the prompt immediately and ask you to rewrite it yourself.
-
-This delayed path keeps non-blocking feedback out of the `UserPromptSubmit` stdout path, where hook output can affect the main Claude turn. The plugin does not auto-correct or replace your submitted prompt.
-
-## Configuration
-
-The plugin prompts for one text option when enabled. The default is `coach`; leave the field as `coach` unless you want a different behavior. Current Claude Code `userConfig` supports text fields, not enum/select dropdowns, so this field cannot be a native select yet.
-
-- `coach`: corrected version and one to three explanations
-- `gentle`: one short hint
-- `gate`: block meaningful grammar or clarity issues
-- `strict`: gate behavior with fuller feedback
-
-Invalid or empty values fall back to `coach`.
-
-## Requirements
-
-- Claude Code installed and authenticated.
-- Node.js 18 or newer.
-- The `claude` CLI available on `PATH`.
-
-## Troubleshooting
-
-If feedback does not appear, run `/hooks` in Claude Code and confirm the `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` hooks are registered from `prompt-english-coach`.
-
-If the internal Claude evaluator fails, the hook allows the prompt to continue. This prevents the coach from breaking the coding workflow.
-
-If prompts are very large, the plugin only sends the first 6,000 characters to the internal English evaluator. Your original prompt still continues unchanged in non-blocking modes.
-
-The displayed `Your prompt` block is capped at 240 characters so long prompts do not flood the terminal.
-
-Delayed feedback is stored briefly in a user-private pending file and expires after 24 hours.
+- Ignores Russian, non-English, mixed-language, and very short prompts.
+- Uses the local `claude` CLI, so no extra API key is required.
+- Non-blocking feedback is delayed until the `Stop` hook so it does not affect the prompt Claude answers.
+- Long displayed prompts are capped at 240 characters.
+- Pending feedback is stored briefly in a user-private file and cleaned up by `Stop`, `StopFailure`, or `SessionEnd`.

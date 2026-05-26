@@ -5,6 +5,8 @@
   <circle cx="70" cy="39" r="6" fill="#f59e0b"/>
   <circle cx="92" cy="39" r="6" fill="#10b981"/>
   <text x="122" y="44" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#cbd5e1">Claude Code</text>
+  <rect x="770" y="30" width="158" height="26" rx="13" fill="#2563eb"/>
+  <text x="790" y="49" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#eff6ff">coach mode</text>
 
   <text x="42" y="96" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e5e7eb">&gt; Can you calculate 17 plus 28 and answer only with the number?</text>
   <text x="42" y="124" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e5e7eb">  I doesnt need explanation.</text>
